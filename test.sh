@@ -27,7 +27,7 @@ for dotfile in .??*; do
     [[ "$dotfile" == ".git" ]] && continue
     [[ "$dotfile" == ".gitignore" ]] && continue
     [[ "$dotfile" == ".DS_Store" ]] && continue
-    [[ "$dotfile" == ".ssh" ]] && continue  # .sshディレクトリは個別に処理
+    [[ "$dotfile" == ".ssh" ]] && continue
     
     check_symlink "$HOME/dotfiles/$dotfile" "$HOME/$dotfile"
 done
@@ -48,4 +48,14 @@ if [ -f "$HOME/dotfiles/.ssh/config" ]; then
     else
         echo -e "${RED}✗${RESET} .ssh/config has incorrect permissions or doesn't exist"
     fi
+fi
+
+# エディタ設定のテスト
+echo "Testing editor configurations..."
+
+# Cursor
+if [ -d "/Applications/Cursor.app" ]; then
+    echo "Testing Cursor settings..."
+    check_symlink "$HOME/dotfiles/editors/settings/cursor.json" "$HOME/Library/Application Support/Cursor/User/settings.json"
+    check_symlink "$HOME/dotfiles/editors/keybindings/cursor.json" "$HOME/Library/Application Support/Cursor/User/keybindings.json"
 fi
