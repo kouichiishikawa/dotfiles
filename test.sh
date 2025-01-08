@@ -27,6 +27,7 @@ for dotfile in .??*; do
     [[ "$dotfile" == ".git" ]] && continue
     [[ "$dotfile" == ".gitignore" ]] && continue
     [[ "$dotfile" == ".DS_Store" ]] && continue
+    [[ "$dotfile" == ".ssh" ]] && continue  # .sshディレクトリは個別に処理
     
     check_symlink "$HOME/dotfiles/$dotfile" "$HOME/$dotfile"
 done
@@ -42,9 +43,9 @@ if [ -f "$HOME/dotfiles/.ssh/config" ]; then
         echo -e "${RED}✗${RESET} .ssh directory has incorrect permissions"
     fi
     
-    if [ "$(stat -f "%OLp" "$HOME/.ssh/config")" = "600" ]; then
+    if [ -f "$HOME/.ssh/config" ] && [ "$(stat -f "%OLp" "$HOME/.ssh/config")" = "600" ]; then
         echo -e "${GREEN}✓${RESET} .ssh/config has correct permissions (600)"
     else
-        echo -e "${RED}✗${RESET} .ssh/config has incorrect permissions"
+        echo -e "${RED}✗${RESET} .ssh/config has incorrect permissions or doesn't exist"
     fi
 fi
