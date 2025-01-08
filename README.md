@@ -6,7 +6,8 @@
 ```bash
 git clone git@github.com:kouichiishikawa/dotfiles.git ~/dotfiles
 cd ~/dotfiles
-./install.sh```
+./install.sh
+```
 
 ## 含まれるもの
 - .zshrc - Zshシェルの設定
