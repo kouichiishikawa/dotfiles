@@ -50,6 +50,7 @@ create_symlinks() {
         [[ "$dotfile" == ".gitignore" ]] && continue
         [[ "$dotfile" == ".DS_Store" ]] && continue
         [[ "$dotfile" == ".Trash" ]] && continue
+        [[ "$dotfile" == ".ssh" ]] && continue  # .sshは個別に処理
 
         # 既存ファイルのバックアップ
         if [ -e "$HOME/$dotfile" ]; then
