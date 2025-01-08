@@ -10,10 +10,14 @@ cd ~/dotfiles
 ```
 
 ## 含まれるもの
-- .zshrc - Zshシェルの設定
-- .zprofile - ログインシェルの設定
-- .gitconfig - Gitの設定
-- .ssh/config - SSHの設定（公開設定のみ）
+- .zshrc
+  - Zshシェルの設定
+- .zprofile
+  - ログインシェルの設定
+- .gitconfig
+  - Gitの設定
+- .ssh/config
+  - SSHの設定（公開設定のみ）
 
 ## 機能
 - 既存のdotfilesの自動バックアップ
