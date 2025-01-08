@@ -1,5 +1,6 @@
-# dotfiles
-開発環境のセットアップ用dotfilesです。
+![dotfiles](https://github.com/user-attachments/assets/31857947-4256-409c-afac-2fec6065c495)
+
+これはkouichiishikawaの開発環境のセットアップ用dotfilesです。
 
 ## インストール方法
 ```bash
