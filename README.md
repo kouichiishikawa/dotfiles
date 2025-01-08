@@ -1,36 +1,32 @@
-# dotfiles
+# Kouichi's dotfiles
+開発環境のセットアップ用dotfilesです。
 
-My personal dotfiles for development environment setup.
-
-## Installation
+## インストール方法
 
 ```bash
 git clone git@github.com:kouichiishikawa/dotfiles.git ~/dotfiles
 cd ~/dotfiles
-./install.sh
-What's included
+./install.sh```
 
-.zshrc - Zsh shell configuration
-.zprofile - Login shell configuration
-.gitconfig - Git configuration
-.ssh/config - SSH configuration (public settings only)
+## 含まれるもの
+- .zshrc - Zshシェルの設定
+- .zprofile - ログインシェルの設定
+- .gitconfig - Gitの設定
+- .ssh/config - SSHの設定（公開設定のみ）
 
-Features
+## 機能
+- 既存のdotfilesの自動バックアップ
+- Homebrewのインストール確認
+- エラーハンドリング機能付きの安全なインストール
+- 視認性の高いカラー出力
+- 検証用のテストスクリプト
+## 必要要件
+- Git
+- macOS
+- Zsh
 
-Automatic backup of existing dotfiles
-Homebrew installation check
-Safe installation with error handling
-Colored output for better visibility
-Test script for verification
-
-Requirements
-
-Git
-macOS
-Zsh
-
-Directory Structure
-Copy.
+## ディレクトリ構成
+.
 ├── .gitignore
 ├── .zshrc
 ├── .zprofile
