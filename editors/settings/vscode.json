@@ -1,0 +1,24 @@
+{
+    "workbench.colorTheme": "Default Dark+",
+    "workbench.iconTheme": "vscode-icons",
+    "editor.suggestSelection": "first",
+    "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
+    "security.workspace.trust.untrustedFiles": "open",
+    "vsicons.dontShowNewVersionMessage": true,
+    "editor.fontFamily": "Source Han Code JP",
+    "editor.unicodeHighlight.nonBasicASCII": false,
+    "editor.unicodeHighlight.ambiguousCharacters": false,
+    "files.autoGuessEncoding": true,
+    "editor.stickyTabStops": true,
+    "[html]": {
+        "editor.defaultFormatter": "vscode.html-language-features"
+    },
+    "editor.unicodeHighlight.allowedCharacters": {
+        "​": true
+    },
+    "figma.autocompleteBlocks": true,
+    "settingsSync.ignoredSettings": [
+        "figma.autocompleteBlocks"
+    ],
+    "git.autofetch": true
+}
