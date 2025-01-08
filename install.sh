@@ -87,6 +87,31 @@ setup_ssh() {
 setup_editors() {
     log "Setting up editor configurations..."
     
+    # VSCode
+    if [ -d "/Applications/Visual Studio Code.app" ]; then
+        info "Setting up VSCode..."
+        mkdir -p "$HOME/Library/Application Support/Code/User"
+        
+        # バックアップ
+        if [ -f "$HOME/Library/Application Support/Code/User/settings.json" ]; then
+            mv "$HOME/Library/Application Support/Code/User/settings.json" "$BACKUP_DIR/vscode_settings.json"
+        fi
+        if [ -f "$HOME/Library/Application Support/Code/User/keybindings.json" ]; then
+            mv "$HOME/Library/Application Support/Code/User/keybindings.json" "$BACKUP_DIR/vscode_keybindings.json"
+        fi
+        
+        # シンボリックリンク作成
+        info "Linking VSCode settings"
+        ln -snfv "$DOTFILES_DIR/editors/settings/vscode.json" "$HOME/Library/Application Support/Code/User/settings.json"
+        ln -snfv "$DOTFILES_DIR/editors/keybindings/vscode.json" "$HOME/Library/Application Support/Code/User/keybindings.json"
+
+        # 拡張機能のインストール
+        info "Installing VSCode extensions"
+        while IFS= read -r extension || [ -n "$extension" ]; do
+            code --install-extension "$extension"
+        done < "$DOTFILES_DIR/editors/extensions/vscode.txt"
+    fi
+    
     # Cursor
     if [ -d "/Applications/Cursor.app" ]; then
         info "Setting up Cursor..."
@@ -104,6 +129,12 @@ setup_editors() {
         info "Linking Cursor settings"
         ln -snfv "$DOTFILES_DIR/editors/settings/cursor.json" "$HOME/Library/Application Support/Cursor/User/settings.json"
         ln -snfv "$DOTFILES_DIR/editors/keybindings/cursor.json" "$HOME/Library/Application Support/Cursor/User/keybindings.json"
+
+        # 拡張機能のインストール
+        info "Installing Cursor extensions"
+        while IFS= read -r extension || [ -n "$extension" ]; do
+            cursor --install-extension "$extension"
+        done < "$DOTFILES_DIR/editors/extensions/cursor.txt"
     fi
 }
 

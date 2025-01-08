@@ -53,6 +53,13 @@ fi
 # エディタ設定のテスト
 echo "Testing editor configurations..."
 
+# VSCode
+if [ -d "/Applications/Visual Studio Code.app" ]; then
+    echo "Testing VSCode settings..."
+    check_symlink "$HOME/dotfiles/editors/settings/vscode.json" "$HOME/Library/Application Support/Code/User/settings.json"
+    check_symlink "$HOME/dotfiles/editors/keybindings/vscode.json" "$HOME/Library/Application Support/Code/User/keybindings.json"
+fi
+
 # Cursor
 if [ -d "/Applications/Cursor.app" ]; then
     echo "Testing Cursor settings..."
