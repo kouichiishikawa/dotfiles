@@ -50,7 +50,7 @@ create_symlinks() {
         [[ "$dotfile" == ".gitignore" ]] && continue
         [[ "$dotfile" == ".DS_Store" ]] && continue
         [[ "$dotfile" == ".Trash" ]] && continue
-        [[ "$dotfile" == ".ssh" ]] && continue  # .sshは個別に処理
+        [[ "$dotfile" == ".ssh" ]] && continue
 
         # 既存ファイルのバックアップ
         if [ -e "$HOME/$dotfile" ]; then
@@ -83,6 +83,30 @@ setup_ssh() {
     fi
 }
 
+# エディタの設定
+setup_editors() {
+    log "Setting up editor configurations..."
+    
+    # Cursor
+    if [ -d "/Applications/Cursor.app" ]; then
+        info "Setting up Cursor..."
+        mkdir -p "$HOME/Library/Application Support/Cursor/User"
+        
+        # バックアップ
+        if [ -f "$HOME/Library/Application Support/Cursor/User/settings.json" ]; then
+            mv "$HOME/Library/Application Support/Cursor/User/settings.json" "$BACKUP_DIR/cursor_settings.json"
+        fi
+        if [ -f "$HOME/Library/Application Support/Cursor/User/keybindings.json" ]; then
+            mv "$HOME/Library/Application Support/Cursor/User/keybindings.json" "$BACKUP_DIR/cursor_keybindings.json"
+        fi
+        
+        # シンボリックリンク作成
+        info "Linking Cursor settings"
+        ln -snfv "$DOTFILES_DIR/editors/settings/cursor.json" "$HOME/Library/Application Support/Cursor/User/settings.json"
+        ln -snfv "$DOTFILES_DIR/editors/keybindings/cursor.json" "$HOME/Library/Application Support/Cursor/User/keybindings.json"
+    fi
+}
+
 # Homebrewがインストールされているか確認
 setup_homebrew() {
     if ! has "brew"; then
@@ -101,6 +125,7 @@ main() {
     if [ -d "$DOTFILES_DIR" ]; then
         create_symlinks
         setup_ssh
+        setup_editors
         setup_homebrew
     else
         error "dotfiles directory not found: $DOTFILES_DIR"
