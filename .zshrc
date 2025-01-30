@@ -15,6 +15,10 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"
 [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
 
+# Yarn
+export PATH="$PATH:`yarn global bin`"
+export PATH="$HOME/.config/yarn/global/node_modules/.bin:$PATH"
+
 # Ruby (rbenv)
 eval "$(rbenv init -)"
 
