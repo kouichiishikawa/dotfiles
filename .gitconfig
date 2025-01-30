@@ -7,12 +7,12 @@
 	process = git-lfs filter-process
 	required = true
 [core]
-	editor = code --wait
+	editor = cursor --wait
 	compression = 0
 	packedGitLimit = 512m
 	packedGitWindowSize = 512m
 [merge]
-	tool = code --wait \"$MERGED\"
+	tool = cursor --wait \"$MERGED\"
 [push]
 	default = simple
 [http]
