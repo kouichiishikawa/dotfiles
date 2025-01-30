@@ -8,7 +8,16 @@
 	required = true
 [core]
 	editor = code --wait
+	compression = 0
+	packedGitLimit = 512m
+	packedGitWindowSize = 512m
 [merge]
 	tool = code --wait \"$MERGED\"
 [push]
 	default = simple
+[http]
+	postBuffer = 524288000
+[pack]
+	deltaCacheSize = 512m
+	packSizeLimit = 512m
+	windowMemory = 512m
