@@ -22,5 +22,6 @@
     "git.autofetch": true,
     "editor.minimap.enabled": true,
     "editor.minimap.maxColumn": 80,
-    "editor.minimap.sectionHeaderFontSize": 8
+    "editor.minimap.sectionHeaderFontSize": 8,
+    "git.confirmSync": false
 }

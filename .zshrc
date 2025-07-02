@@ -52,7 +52,26 @@ setup_node() {
 setup_python() {
     export PYENV_ROOT="$HOME/.pyenv"
     [[ -d $PYENV_ROOT/bin ]] && path=($PYENV_ROOT/bin $path)
-    eval "$(pyenv init -)"
+    
+    # pyenvが存在する場合のみ初期化を実行
+    if command -v pyenv >/dev/null 2>&1; then
+        eval "$(pyenv init -)"
+    fi
+    
+    # Poetry設定
+    if command -v poetry >/dev/null 2>&1; then
+        export POETRY_HOME="$HOME/.local/share/pypoetry"
+        export PATH="$POETRY_HOME/bin:$PATH"
+        # 仮想環境をプロジェクト内に作成
+        export POETRY_VENV_IN_PROJECT=1
+    fi
+    
+    # pip設定
+    export PIP_REQUIRE_VIRTUALENV=true
+    export PIP_DOWNLOAD_CACHE="$HOME/.pip/cache"
+    
+    # Jupyter設定
+    export JUPYTER_CONFIG_DIR="$HOME/.jupyter"
 }
 
 # Ruby (rbenv)
@@ -75,6 +94,15 @@ setup_ruby
 alias ll='ls -la'
 alias g='git'
 alias dc='docker-compose'
+
+# Python開発用エイリアス
+alias py='python3'
+alias pip='python3 -m pip'
+alias venv='python3 -m venv'
+alias jl='jupyter lab'
+alias jn='jupyter notebook'
+alias pf='pip freeze'
+alias pr='pip install -r requirements.txt'
 
 # Git補完
 # =======
