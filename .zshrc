@@ -95,6 +95,29 @@ alias ll='ls -la'
 alias g='git'
 alias dc='docker-compose'
 
+# 開発ファイルをCursorで開く
+alias edit='cursor'
+
+# 開発用ファイルの関数定義
+open_with_cursor() {
+    local file="$1"
+    if [[ -f "$file" ]]; then
+        case "$file" in
+            *.py|*.js|*.ts|*.jsx|*.tsx|*.vue|*.php|*.rb|*.go|*.rs|*.java|*.cpp|*.c|*.h|*.hpp|*.css|*.scss|*.sass|*.less|*.html|*.xml|*.json|*.yaml|*.yml|*.toml|*.ini|*.cfg|*.conf|*.sh|*.bash|*.zsh|*.fish|*.sql|*.md|*.txt|*.csv|*.log|*.env|*.gitignore|*.dockerignore|Dockerfile|Makefile|*.mk|*.cmake|CMakeLists.txt|*.lock|*.sum|*.mod|requirements.txt|package.json|composer.json|Gemfile|Cargo.toml|pyproject.toml|setup.py|setup.cfg|tox.ini|.flake8|.pylintrc|.mypy.ini|.pre-commit-config.yaml|.github/workflows/*|.gitlab-ci.yml|.travis.yml|.circleci/config.yml)
+                cursor "$file"
+                ;;
+            *)
+                open "$file"
+                ;;
+        esac
+    else
+        echo "File not found: $file"
+    fi
+}
+
+# 'o' コマンドを開発ファイル用に設定
+alias o='open_with_cursor'
+
 # Python開発用エイリアス
 alias py='python3'
 alias pip='python3 -m pip'
