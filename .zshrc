@@ -1,3 +1,10 @@
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
 # 基本設定
 # ==========
 setopt append_history
@@ -131,6 +138,16 @@ alias pr='pip install -r requirements.txt'
 # =======
 autoload -Uz compinit && compinit
 
+# Carapace補完（pixi等）
+# ====================
+export CARAPACE_BRIDGES='zsh,fish,bash,inshellisense'
+zstyle ':completion:*' format $'\e[2;37mCompleting %d\e[m'
+source <(carapace _carapace)
+
+# zsh-autosuggestions
+# ===================
+source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
+
 # プロンプト設定
 # ============
 autoload -Uz vcs_info
@@ -147,3 +164,9 @@ HISTSIZE=10000
 SAVEHIST=10000
 
 [[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
+source ~/powerlevel10k/powerlevel10k.zsh-theme
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+export PATH="/Users/kouichiishikawa/.pixi/bin:$PATH"
