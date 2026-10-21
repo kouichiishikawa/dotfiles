@@ -170,3 +170,11 @@ source ~/powerlevel10k/powerlevel10k.zsh-theme
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 export PATH="/Users/kouichiishikawa/.pixi/bin:$PATH"
+
+# 秘密情報(git管理外) — MCP用トークン等は ~/.secrets.zsh に置く
+[[ -f ~/.secrets.zsh ]] && source ~/.secrets.zsh
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/kouichiishikawa/.docker/completions $fpath)
+autoload -Uz compinit
+(( ${+_comps[docker]} )) || compinit
+# End of Docker CLI completions
