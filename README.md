@@ -12,12 +12,12 @@ cd ~/dotfiles
 
 ## 含まれるもの
 ```
-- .zshrc - Zshシェルの設定（Python環境設定含む）
+- .zshrc - Zshシェルの設定（Python環境設定、Kiro統合含む）
 - .zprofile - ログインシェルの設定
-- .gitconfig - Gitの設定
-- .ssh/config - SSHの設定（公開設定のみ）
+- .gitconfig - Gitの設定（SSH推奨設定含む）
+- .ssh/config - GitHub用SSH設定（ED25519鍵使用）
 - editors/ - エディタ設定
-  ├── settings/ - 各エディタの設定ファイル
+  ├── settings/ - 各エディタの設定ファイル（自動整形設定含む）
   ├── keybindings/ - キーバインド設定
   └── extensions/ - 拡張機能リスト
 - install.sh - メインインストールスクリプト
@@ -30,12 +30,14 @@ cd ~/dotfiles
 - 既存のdotfilesの自動バックアップ
 - Homebrewのインストール確認
 - Python開発環境の自動構築 (pyenv, Poetry, Jupyter)
+- GitHub SSH接続の自動設定（ED25519鍵使用）
 - エラーハンドリング機能付きの安全なインストール
 - 自動ロールバック機能
 - 包括的な設定検証機能
 - 視認性の高いカラー出力
 - エディタ設定の自動セットアップ
 - エディタ拡張機能の自動インストール
+- コード品質維持（保存時自動整形）
 ```
 
 ## エディタ設定
@@ -47,11 +49,19 @@ cd ~/dotfiles
   - extensions.txt - インストール済み拡張機能のリスト
 
 - Cursor
-  - settings.json - エディタの基本設定
+  - settings.json - エディタの基本設定（保存時自動整形有効）
   - keybindings.json - カスタムキーバインド
   - extensions.txt - インストール済み拡張機能のリスト
 ```
 各エディタの設定は editors/ ディレクトリで管理され、インストール時に自動的にシンボリックリンクが作成されます。
+
+### Cursorの自動整形設定
+- 保存時に最終行へ改行を自動挿入
+- 保存時に最終行以降の空行を自動削除
+- 保存時に末尾の空白を自動トリミング
+- 保存時にコードを自動整形
+
+### インストール処理
 - 設定ファイルのシンボリックリンク作成
 - 既存の設定ファイルのバックアップ
 - 拡張機能の自動インストール
@@ -61,10 +71,30 @@ cd ~/dotfiles
 - Git
 - macOS
 - Zsh
+- SSH鍵（ED25519推奨）
 - コマンドラインツール
   - VSCode: `code` コマンド
   - Cursor: `cursor` コマンド
 ```
+
+## SSH設定
+GitHub接続にはSSH方式を使用します：
+```bash
+# SSH鍵の生成（初回のみ）
+ssh-keygen -t ed25519 -C "your_email@example.com"
+
+# 公開鍵をGitHubに登録
+# https://github.com/settings/keys
+cat ~/.ssh/id_ed25519.pub
+
+# 接続テスト
+ssh -T git@github.com
+```
+
+### 自動設定される内容
+- GitHub用SSH設定（`.ssh/config`）
+- HTTPS URLの自動SSH変換（`.gitconfig`）
+- macOSキーチェーンへの鍵登録
 
 ## Python開発環境
 自動で以下のPython開発環境が構築されます：

@@ -21,3 +21,9 @@
 	deltaCacheSize = 512m
 	packSizeLimit = 512m
 	windowMemory = 512m
+[url "git@github.com:"]
+	insteadOf = https://github.com/
+[gpg]
+	format = ssh
+[commit]
+	gpgsign = false
