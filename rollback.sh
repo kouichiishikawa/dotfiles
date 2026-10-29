@@ -5,7 +5,7 @@ set -eu
 # スクリプトの場所を基準にする（install.sh と同じ）
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # install.sh がホームにリンクするファイル（install.sh の LINK_FILES と揃える）
-LINK_FILES=(.zshrc .zprofile .gitconfig)
+LINK_FILES=(.zshrc .zprofile .gitconfig .config/starship.toml)
 
 # カラー定義
 ESC=$(printf '\033')
@@ -164,10 +164,22 @@ restore_dotfiles() {
     
     log "Restoring dotfiles from: $backup_dir"
     
-    # バックアップディレクトリ内のファイルを復元
+    # 入れ子のリンク対象（.config/starship.toml など）は、同じ相対パスへ戻す
+    for dotfile in "${LINK_FILES[@]}"; do
+        case "$dotfile" in */*) ;; *) continue ;; esac
+        # -L も見る: 相対リンクはバックアップへ移すとリンク先が解決できず -e が偽になる
+        [ -e "$backup_dir/$dotfile" ] || [ -L "$backup_dir/$dotfile" ] || continue
+        info "Restoring $dotfile"
+        mkdir -p "$(dirname "$HOME/$dotfile")"
+        mv "$backup_dir/$dotfile" "$HOME/$dotfile"
+        rmdir "$backup_dir/$(dirname "$dotfile")" 2>/dev/null || true
+    done
+
+    # バックアップディレクトリ内のファイルを復元（ディレクトリは上で扱った入れ子のものなので飛ばす）
     for backup_file in "$backup_dir"/.??*; do
-        [ ! -e "$backup_file" ] && continue
-        
+        [ -e "$backup_file" ] || [ -L "$backup_file" ] || continue
+        [ -d "$backup_file" ] && [ ! -L "$backup_file" ] && continue
+
         local filename=$(basename "$backup_file")
         local target="$HOME/$filename"
         

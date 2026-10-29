@@ -10,7 +10,7 @@ cd ~/dotfiles
 ./install.sh
 ```
 
-- リンクするのは `.zshrc` `.zprofile` `.gitconfig` だけ（`install.sh` の `LINK_FILES`）。どのフォルダから実行しても同じ結果になる
+- リンクするのは `.zshrc` `.zprofile` `.gitconfig` `.config/starship.toml`（→ `~/.config/starship.toml`）だけ（`install.sh` の `LINK_FILES`）。どのフォルダから実行しても同じ結果になる
 - リンクだけ作るときは `./install.sh --links-only`
 - Git の名前とメールアドレスはリポジトリに載せず、手元の `~/.gitconfig.local` に置く（`.gitconfig` が `[include]` で読む）
   ```bash
@@ -21,7 +21,8 @@ cd ~/dotfiles
 
 ## 含まれるもの
 ```
-- .zshrc - Zshシェルの設定（Python環境設定、Kiro統合含む）
+- .zshrc - Zshシェルの設定（mise・starship・fzf・zoxide・atuin・zsh のプラグイン）
+- .config/starship.toml - プロンプト（starship）の設定
 - .zprofile - ログインシェルの設定
 - .gitconfig - Gitの設定（SSH推奨設定含む。user は ~/.gitconfig.local）
 - .githooks/pre-commit - gitleaks による秘密情報の検査
@@ -126,17 +127,16 @@ ssh -T git@github.com
 
 ## 便利なエイリアス
 ```bash
-# Python開発用
-py          # python3
-pip         # python3 -m pip
-venv        # python3 -m venv
-jl          # jupyter lab
-jn          # jupyter notebook
-pf          # pip freeze
-pr          # pip install -r requirements.txt
-
 # 一般用
-ll          # ls -la
+ls          # eza
+ll          # eza -la --git
+tree        # eza --tree
+cat         # bat（ページャーなし）
+z <dir>     # zoxide
+Ctrl+R      # atuin（履歴検索）
+Ctrl+T      # fzf（ファイル検索）
+edit / o    # VS Code で開く
+py          # python3
 g           # git
 dc          # docker-compose
 ```
@@ -145,8 +145,10 @@ dc          # docker-compose
 ```
 .
 ├── .gitignore
-├── .zshrc          # Python環境設定含む
+├── .zshrc
 ├── .zprofile
+├── .config/
+│   └── starship.toml
 ├── .gitconfig
 ├── .ssh/
 │   └── config

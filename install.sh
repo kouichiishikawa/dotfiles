@@ -36,7 +36,7 @@ fi
 # スクリプトの場所を基準にする（どのフォルダから実行しても同じ結果にする）
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # ホームにリンクするファイル（ここに書いたものだけをリンクする）
-LINK_FILES=(.zshrc .zprofile .gitconfig)
+LINK_FILES=(.zshrc .zprofile .gitconfig .config/starship.toml)
 
 # --links-only: リンクの作成だけを行う（Homebrew・Python・エディタの導入をしない）
 LINKS_ONLY=false
@@ -85,11 +85,14 @@ create_symlinks() {
         # 既存ファイルのバックアップ
         if [ -e "$HOME/$dotfile" ] || [ -L "$HOME/$dotfile" ]; then
             info "Backing up $dotfile"
-            mv "$HOME/$dotfile" "$BACKUP_DIR/"
+            # 相対パスのまま残す（rollback.sh が同じ場所へ戻す）
+            mkdir -p "$BACKUP_DIR/$(dirname "$dotfile")"
+            mv "$HOME/$dotfile" "$BACKUP_DIR/$dotfile"
         fi
 
         # シンボリックリンクの作成
         info "Linking $dotfile"
+        mkdir -p "$(dirname "$HOME/$dotfile")"
         ln -snfv "$DOTFILES_DIR/$dotfile" "$HOME/$dotfile"
     done
 }
