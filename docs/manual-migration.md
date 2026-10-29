@@ -13,25 +13,24 @@
 2. 古い Mac で「5. 外付け SSD にコピーするもの」を rsync でコピーする
 3. 古い Mac で「6. アプリの設定」のうち「書き出しが要る」ものを書き出す
 4. 新しい Mac で README の手順（1Password → `install.sh` → `brew bundle`）を実行する
-5. 新しい Mac で「2. 手で入れるアプリ」を入れ、サインインする
+5. 新しい Mac で「1. Brewfile で入るアプリ」にサインインし、「2. 手で入れるもの」を入れる
 6. 新しい Mac で外付け SSD から戻し、「4. 大きいデータ」の落とし直しを始める
 7. 「8. 後片付け」を行う
 
-## 1. Homebrew で入れられるが、Brewfile にまだ無いアプリ
+## 1. Brewfile で入るアプリ（人がやること）
 
-cask はあるが、Brewfile にはまだ無い。どれを Brewfile に足すかは DEV-201 の PR で決める。足さなかったものは `brew install --cask <名前>` で入れる。
+`install.sh` の `brew bundle` で入る（DEV-205 で Brewfile に足した）。入ったあとに人がやるのは、右の列のサインインと設定だけ。
 
 | アプリ | cask | サインイン・ライセンス |
 |---|---|---|
-| 1Password | `1password` | 要（README の手順で最初に入れる） |
 | Raycast | `raycast` | 要。設定は書き出しが要る（6 を見る） |
 | Ghostty | `ghostty` | 不要（設定は dotfiles） |
-| cmux | `cmux` | 不要（設定は 6 を見る） |
+| cmux | `cmux` | **要（アカウントでログインする）**。設定は dotfiles |
 | Cursor / Visual Studio Code | `cursor` / `visual-studio-code` | 要（設定は各アプリの同期で戻る） |
 | Claude / ChatGPT / Antigravity | `claude` / `chatgpt` / `antigravity` | 要 |
 | Figma / Framer / Spline | `figma` / `framer` / `spline` | 要 |
 | Notion / Notion Calendar / Linear / Obsidian | `notion` / `notion-calendar` / `linear` / `obsidian` | 要（Obsidian は保管庫を開き直す） |
-| Arc / Dia / Google Chrome | `arc` / `thebrowsercompany-dia` / `google-chrome` | 要（ブックマークなどは同期で戻る） |
+| Google Chrome | `google-chrome` | 要（ブックマークなどは同期で戻る） |
 | Discord / zoom | `discord` / `zoom` | 要 |
 | Dropbox / Google Drive | `dropbox` / `google-drive` | 要（Google Drive は 2 アカウント） |
 | GitHub Desktop / GitButler | `github` / `gitbutler` | 要 |
@@ -47,7 +46,9 @@ cask はあるが、Brewfile にはまだ無い。どれを Brewfile に足す�
 | Native Access | `native-access` | 要。音源は 4 を見る |
 | Adobe Creative Cloud | `adobe-creative-cloud` | 要。Photoshop・Illustrator・Lightroom Classic・Acrobat はここから入れる |
 
-## 2. 手で入れるアプリ（cask が無い・別の入手先）
+1Password は Brewfile に入れない。SSH と署名に要るので、README の手順で最初に入れる（`install.sh` も `brew bundle` の前に入れる）。
+
+## 2. 手で入れるもの（cask が無い・別の入手先）
 
 | アプリ | 入手先 | メモ |
 |---|---|---|
@@ -60,7 +61,14 @@ cask はあるが、Brewfile にはまだ無い。どれを Brewfile に足す�
 | Native Instruments の音源・プラグイン | Native Access | 要サインイン。4 を見る |
 | Google ドキュメント・スプレッドシート・スライド | Google Drive に付いてくる | 単体で入れる必要はない |
 
-入れ直さないもの: `Python 3.13`（python.org 版。Python は uv で入れる）、`/Applications/Hewlett-Packard`（リンク先が無い）、`~/Applications` のアンインストーラだけが残っているもの、`~/Applications/DDPM`（Dell のモニター管理のログと設定だけ）。
+VS Code・Cursor の拡張機能のうち、マーケットプレイスに無いので `install.sh` が入れられないもの（DEV-205 で `editors/extensions/*.txt` から外した）。要るものだけ、古い Mac から VSIX を書き出すか、作者の配布元から入れる。
+
+| エディタ | 拡張機能 |
+|---|---|
+| VS Code | `equinusocio.vsc-community-material-theme`（Marketplace に無い） |
+| Cursor | `brapifra.phpserver` `equinusocio.vsc-community-material-theme` `equinusocio.vsc-material-theme` `equinusocio.vsc-material-theme-icons` `figma.figma-vscode-extension` `github.codespaces` `mosapride.zenkaku` `visualstudioexptteam.intellicode-api-usage-examples` `visualstudioexptteam.vscodeintellicode`（Open VSX に無い） |
+
+入れ直さないもの: Arc と Dia（新しい Mac では使わない。2026-10-29 決定）、`Python 3.13`（python.org 版。`/usr/local/bin/python3` が指している。Python は uv で入れる。古い Mac の分はそのまま残す）、`/Applications/Hewlett-Packard`（リンク先が無い）、`~/Applications` のアンインストーラだけが残っているもの、`~/Applications/DDPM`（Dell のモニター管理のログと設定だけ）。
 
 App Store のアプリ（`mas list` の 10 個）は全部 Brewfile にある。
 
@@ -149,7 +157,7 @@ rsync -a --files-from=/tmp/migration-secrets.txt ~/Documents/ "$DEST/Documents-s
 | アプリ | 戻し方 |
 |---|---|
 | Raycast | **書き出しが要る**（Pro を契約していないのでクラウド同期が無い）。Settings → Advanced → Export で `.rayconfig` を書き出し、新しい Mac で Import する。自作のスクリプトは git のリポジトリにある |
-| cmux | **手で移す**。`~/.config/cmux/cmux.json` は dotfiles に入っていない（dotfiles に足す案は DEV-201 の PR 本文） |
+| cmux | 設定（`~/.config/cmux/cmux.json`）は dotfiles のリンクで戻る。アカウントでのログインは手で行う |
 | Google 日本語入力 | **書き出しが要る**。辞書ツールでユーザー辞書を書き出し、新しい Mac で読み込む |
 | Elgato Stream Deck | **書き出しが要る**。設定のプロファイルを書き出す（または「バックアップ」） |
 | 1Password | サインインで戻る。SSH エージェントを有効にする（README） |
@@ -159,14 +167,14 @@ rsync -a --files-from=/tmp/migration-secrets.txt ~/Documents/ "$DEST/Documents-s
 | VS Code・Cursor | 各アプリの設定同期（Settings Sync）で戻る。同期を使っていなければ拡張の一覧を書き出す |
 | Obsidian | 保管庫は iCloud（iCloud Drive の Obsidian フォルダ）と `~/brain`（git）にある。新しい Mac で保管庫を開き直す |
 | Claude Code・Codex（`~/.claude`・`~/.codex`） | Agent 基盤の移行手順で扱う（このチェックリストの外）。`~/.agents`・`~/brain` は GitHub に remote がある |
-| ブラウザ（Arc・Dia・Chrome）| サインインして同期で戻る |
+| ブラウザ（Chrome） | サインインして同期で戻る。Arc と Dia は入れない |
 | macOS の設定 | dotfiles の `macos/defaults.sh` |
 
 ## 7. その他
 
 | 何 | 場所 | 移し方 |
 |---|---|---|
-| 自作の launchd（7 個） | `~/Library/LaunchAgents/com.kouichiishikawa.*` | 6 個は git に plist の元がある（`~/.agents/skills` に 3 個、design-reference のリポジトリに 3 個）。`sprint-followup.plist` だけは元が git に無いので、移行の前に `~/.agents` に入れてもらう（Linear に積んである） |
+| 自作の launchd（7 個） | `~/Library/LaunchAgents/com.kouichiishikawa.*` | plist の元は git にある（`~/.agents/skills/*/launchd/` と design-reference のリポジトリの `launchd/`）。入れ方は README の 5。`sprint-followup` は `~/.agents/skills/sprint/references/watchdog.md` の「followup の入れ方」 |
 | ほかのアプリが入れた launchd | `~/Library/LaunchAgents`・`/Library/LaunchAgents`・`/Library/LaunchDaemons`（Adobe・Google・Dropbox・Logi・Zoom・Epson・Microsoft など） | アプリを入れ直せば作られる。手で移さない |
 | ログインシェル以外のシェルの設定 | `~/.bash_profile` | DEV-202 で扱う |
 | シェルの履歴 | `~/.zsh_history`（324K） | 要るなら 5 の rsync に足す |

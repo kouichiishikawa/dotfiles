@@ -3,7 +3,6 @@ christian-kohler.path-intellisense
 donjayamanne.githistory
 eamodio.gitlens
 ecmel.vscode-html-css
-equinusocio.vsc-community-material-theme
 equinusocio.vsc-material-theme
 equinusocio.vsc-material-theme-icons
 esbenp.prettier-vscode
