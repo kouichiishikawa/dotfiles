@@ -75,17 +75,87 @@ brew "anomalyco/tap/opencode", trusted: true
 brew "supabase/tap/supabase", trusted: true
 # Command-line interface for 1Password
 cask "1password-cli"
+# Collection of apps and services for photography, design, video, web, and UX
+cask "adobe-creative-cloud"
+# Agent orchestration platform
+cask "antigravity"
+# Application uninstaller
+cask "appcleaner"
 # Web browser with built-in AI assistant
 cask "aside"
+# 3D creation suite
+cask "blender"
+# OpenAI's official ChatGPT desktop app
+cask "chatgpt"
+# Anthropic's official Claude AI desktop app
+cask "claude"
+# Ghostty-based terminal with vertical tabs and notifications for AI coding agents
+cask "cmux"
+# Write, edit, and chat about your code with AI
+cask "cursor"
+# Voice and text chat software
+cask "discord"
 # App to build and share containerised applications and microservices
 cask "docker-desktop"
+# Client for the Dropbox cloud storage service
+cask "dropbox"
+# Assign keys, and then decorate and label them
+cask "elgato-stream-deck"
+# Collaborative team software
+cask "figma"
+# Focusrite interface controller for devices of the 4th generation and newer
+cask "focusrite-control-2"
 cask "font-hackgen-nerd"
 cask "font-jetbrains-mono-nerd-font"
 cask "font-moralerspace"
+# Tool that helps teams design every part of the product experience
+cask "framer"
 # Set of tools to manage resources and applications hosted on Google Cloud
 cask "gcloud-cli"
+# Terminal emulator that uses platform-native UI and GPU acceleration
+cask "ghostty"
+# Git client for simultaneous branches on top of your existing workflow
+cask "gitbutler"
+# Desktop client for GitHub repositories
+cask "github"
+# Web browser
+cask "google-chrome"
+# Client for the Google Drive storage service
+cask "google-drive"
+# Japanese input software
+cask "google-japanese-ime"
+# Controller for Insta360 webcams
+cask "insta360-link-controller"
 # Agent-centric IDE with spec-driven development
 cask "kiro"
+# App to manage software development and track bugs
+cask "linear"
+# Software for Logitech devices
+cask "logi-options+"
+# Administration tool for Native Instruments products
+cask "native-access"
+# App to write, plan, collaborate, and get organised
+cask "notion"
+# Calendar for professionals and teams
+cask "notion-calendar"
+# Knowledge base that works on top of a local folder of plain text Markdown files
+cask "obsidian"
+# Organise all your reference images in one place
+cask "ogdesign-eagle"
+# Control your smart light system
+cask "philips-hue-sync"
+# Control your tools with a few keystrokes
+cask "raycast"
+# Screen recorder and editor
+cask "screen-studio"
+# Tool that provides consistent, highly configurable symbols for apps
+cask "sf-symbols"
+# Design and collaborate in 3D
+cask "spline"
+# Open-source code editor
+cask "visual-studio-code"
+# Video communication and virtual meeting platform
+cask "zoom"
 # X API の CLI（tap の信頼は完全名の行にだけ効く）
 cask "xdevplatform/tap/xurl", trusted: true
 mas "1Password for Safari", id: 1569813296
