@@ -33,7 +33,16 @@ if ! has "git"; then
 fi
 
 # 定数定義
-DOTFILES_DIR="$HOME/dotfiles"
+# スクリプトの場所を基準にする（どのフォルダから実行しても同じ結果にする）
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# ホームにリンクするファイル（ここに書いたものだけをリンクする）
+LINK_FILES=(.zshrc .zprofile .gitconfig)
+
+# --links-only: リンクの作成だけを行う（Homebrew・Python・エディタの導入をしない）
+LINKS_ONLY=false
+if [ "${1:-}" = "--links-only" ]; then
+    LINKS_ONLY=true
+fi
 BACKUP_DIR="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
 
 # カラー定義
@@ -68,16 +77,9 @@ log "Created backup directory: $BACKUP_DIR"
 # ドットファイルのシンボリックリンク作成
 create_symlinks() {
     log "Creating symlinks..."
-    for dotfile in .??*; do
-        # 除外ファイル
-        [[ "$dotfile" == ".git" ]] && continue
-        [[ "$dotfile" == ".gitignore" ]] && continue
-        [[ "$dotfile" == ".DS_Store" ]] && continue
-        [[ "$dotfile" == ".Trash" ]] && continue
-        [[ "$dotfile" == ".ssh" ]] && continue
-
+    for dotfile in "${LINK_FILES[@]}"; do
         # 既存ファイルのバックアップ
-        if [ -e "$HOME/$dotfile" ]; then
+        if [ -e "$HOME/$dotfile" ] || [ -L "$HOME/$dotfile" ]; then
             info "Backing up $dotfile"
             mv "$HOME/$dotfile" "$BACKUP_DIR/"
         fi
@@ -86,6 +88,24 @@ create_symlinks() {
         info "Linking $dotfile"
         ln -snfv "$DOTFILES_DIR/$dotfile" "$HOME/$dotfile"
     done
+}
+
+# Git のユーザー情報（公開リポジトリに載せないため ~/.gitconfig.local に置く）
+check_gitconfig_local() {
+    if [ ! -f "$HOME/.gitconfig.local" ]; then
+        warn "~/.gitconfig.local がありません。次のように作ってください:"
+        warn "  git config --file ~/.gitconfig.local user.name  \"<名前>\""
+        warn "  git config --file ~/.gitconfig.local user.email \"<メールアドレス>\""
+    fi
+}
+
+# コミット前に gitleaks で秘密情報を検査する
+setup_git_hooks() {
+    log "Setting up git hooks..."
+    git -C "$DOTFILES_DIR" config core.hooksPath .githooks
+    if ! has "gitleaks"; then
+        warn "gitleaks がありません。brew install gitleaks で入れてください"
+    fi
 }
 
 # SSHの設定
@@ -257,6 +277,12 @@ main() {
     # 既存のdotfilesディレクトリをチェック
     if [ -d "$DOTFILES_DIR" ]; then
         create_symlinks
+        check_gitconfig_local
+        if [ "$LINKS_ONLY" = true ]; then
+            log "Links created (--links-only)"
+            return
+        fi
+        setup_git_hooks
         setup_ssh
         setup_editors
         setup_homebrew
