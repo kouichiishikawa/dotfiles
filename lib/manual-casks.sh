@@ -19,12 +19,17 @@ manual_casks() {
         // 文字列をすべて取り出す（zap は消すときだけの場所なので見ない）
         const strings = v => typeof v === "string" ? [v] : v && typeof v === "object"
             ? Object.entries(v).flatMap(([k, x]) => k === "zap" ? [] : strings(x)) : [];
+        // パスはワイルドカードの手前までを見る。まっさらな Mac にもある共有のフォルダは証拠にしない
+        const shared = ["/Applications", "/Applications/Utilities"];
+        const literal = s => { const p = s.split("/"), i = p.findIndex(x => /[*?[\]]/.test(x));
+                               return (i < 0 ? p : p.slice(0, i)).join("/"); };
+        const present = s => s.startsWith("/Applications/") && !shared.includes(literal(s)) && exists(literal(s));
         function run(receipts) {
             const input = $.NSFileHandle.fileHandleWithStandardInput.readDataToEndOfFile;
             const casks = JSON.parse($.NSString.alloc.initWithDataEncoding(input, 4).js).casks;
             return casks.filter(c => c.artifacts.some(a =>
                 (a.app || []).some(x => exists("/Applications/" + (x.target || x).split("/").pop())) ||
-                strings(a).some(s => s.startsWith("/Applications/") && exists(s.split("/").slice(0, 3).join("/"))) ||
+                strings(a).some(present) ||
                 (a.uninstall || []).some(u => [].concat(u.pkgutil || []).some(id => receipts.includes(id)))
             )).map(c => c.token).join(" ");
         }' $(pkgutil --pkgs) 2>/dev/null
