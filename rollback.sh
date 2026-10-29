@@ -164,10 +164,21 @@ restore_dotfiles() {
     
     log "Restoring dotfiles from: $backup_dir"
     
-    # バックアップディレクトリ内のファイルを復元
+    # 入れ子のリンク対象（.config/starship.toml など）は、同じ相対パスへ戻す
+    for dotfile in "${LINK_FILES[@]}"; do
+        case "$dotfile" in */*) ;; *) continue ;; esac
+        [ -e "$backup_dir/$dotfile" ] || continue
+        info "Restoring $dotfile"
+        mkdir -p "$(dirname "$HOME/$dotfile")"
+        mv "$backup_dir/$dotfile" "$HOME/$dotfile"
+        rmdir "$backup_dir/$(dirname "$dotfile")" 2>/dev/null || true
+    done
+
+    # バックアップディレクトリ内のファイルを復元（ディレクトリは上で扱った入れ子のものなので飛ばす）
     for backup_file in "$backup_dir"/.??*; do
         [ ! -e "$backup_file" ] && continue
-        
+        [ -d "$backup_file" ] && continue
+
         local filename=$(basename "$backup_file")
         local target="$HOME/$filename"
         

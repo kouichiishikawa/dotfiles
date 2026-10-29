@@ -85,7 +85,9 @@ create_symlinks() {
         # 既存ファイルのバックアップ
         if [ -e "$HOME/$dotfile" ] || [ -L "$HOME/$dotfile" ]; then
             info "Backing up $dotfile"
-            mv "$HOME/$dotfile" "$BACKUP_DIR/"
+            # 相対パスのまま残す（rollback.sh が同じ場所へ戻す）
+            mkdir -p "$BACKUP_DIR/$(dirname "$dotfile")"
+            mv "$HOME/$dotfile" "$BACKUP_DIR/$dotfile"
         fi
 
         # シンボリックリンクの作成
