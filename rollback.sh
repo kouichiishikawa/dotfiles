@@ -2,6 +2,11 @@
 
 set -eu
 
+# スクリプトの場所を基準にする（install.sh と同じ）
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# install.sh がホームにリンクするファイル（install.sh の LINK_FILES と揃える）
+LINK_FILES=(.zshrc .zprofile .gitconfig)
+
 # カラー定義
 ESC=$(printf '\033')
 RESET="${ESC}[0m"
@@ -78,14 +83,7 @@ select_backup_directory() {
 remove_symlinks() {
     log "Removing dotfiles symlinks..."
     
-    for dotfile in .??*; do
-        # 除外ファイル
-        [[ "$dotfile" == ".git" ]] && continue
-        [[ "$dotfile" == ".gitignore" ]] && continue
-        [[ "$dotfile" == ".DS_Store" ]] && continue
-        [[ "$dotfile" == ".Trash" ]] && continue
-        [[ "$dotfile" == ".ssh" ]] && continue
-        
+    for dotfile in "${LINK_FILES[@]}"; do
         local target="$HOME/$dotfile"
         
         if [ -L "$target" ]; then
@@ -212,7 +210,7 @@ main() {
     local current_dir=$(pwd)
     
     # dotfilesディレクトリに移動
-    cd "$HOME/dotfiles" || {
+    cd "$DOTFILES_DIR" || {
         error "Failed to change to dotfiles directory"
         exit 1
     }
