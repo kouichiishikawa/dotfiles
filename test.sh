@@ -10,7 +10,7 @@ set -u
 DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 DOTFILES_DIR=${DOTFILES_DIR%/}
 # install.sh の LINK_FILES と揃える
-LINK_FILES=(.zshrc .zprofile .gitconfig .config/starship.toml .config/ghostty/config .config/git/ignore .config/mise/config.toml)
+LINK_FILES=(.zshrc .zprofile .gitconfig .config/starship.toml .config/ghostty/config .config/git/ignore .config/mise/config.toml .config/cmux/cmux.json)
 PYTHON_VERSION=3.12
 # シェルの起動時間の中央値の上限（秒）
 STARTUP_LIMIT=0.3

@@ -38,7 +38,7 @@ cd ~/dotfiles
 | 2 | Homebrew | 何もしない |
 | 3 | 1Password のデスクトップアプリ | 何もしない |
 | 4 | `brew bundle --file=Brewfile` | `brew bundle check` が通れば何もしない |
-| 5 | リンク: `.zshrc` `.zprofile` `.gitconfig`、`.config/` の `starship.toml` `ghostty/config` `git/ignore` `mise/config.toml`（`LINK_FILES`）、`.ssh/config`、VS Code と Cursor の `settings.json` `keybindings.json`（アプリがあるときだけ） | 正しいリンクなら何もしない。別のファイルがあれば `~/.dotfiles_backup/<日時>/` に退避してからリンクする |
+| 5 | リンク: `.zshrc` `.zprofile` `.gitconfig`、`.config/` の `starship.toml` `ghostty/config` `git/ignore` `mise/config.toml` `cmux/cmux.json`（`LINK_FILES`）、`.ssh/config`、VS Code と Cursor の `settings.json` `keybindings.json`（アプリがあるときだけ） | 正しいリンクなら何もしない。別のファイルがあれば `~/.dotfiles_backup/<日時>/` に退避してからリンクする |
 | 6 | VS Code と Cursor の拡張機能（`editors/extensions/*.txt`） | 入っているものは入れない |
 | 7 | `mise install`（Node の LTS）と `uv python install 3.12 --default`（`~/.local/bin/python3`） | 入っていれば何もしない |
 | 8 | dotfiles の `core.hooksPath=.githooks`（コミット前に gitleaks で秘密情報を検査） | 何もしない |
@@ -100,7 +100,8 @@ brew bundle check --verbose --file=Brewfile         # Brewfile にあって入�
 │   ├── starship.toml         # プロンプト
 │   ├── ghostty/config        # ターミナル（Ghostty）
 │   ├── git/ignore            # git の全体の ignore
-│   └── mise/config.toml      # mise で入れるツール（Node の LTS）
+│   ├── mise/config.toml      # mise で入れるツール（Node の LTS）
+│   └── cmux/cmux.json        # cmux の表示とショートカット
 ├── Brewfile                  # Homebrew の formula・cask と App Store のアプリ
 ├── macos/defaults.sh         # macOS の設定（defaults write）
 ├── editors/                  # VS Code（EDITOR は code）と Cursor の設定・キー割り当て・拡張機能の一覧
