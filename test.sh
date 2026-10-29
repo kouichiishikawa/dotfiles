@@ -76,32 +76,9 @@ if [ -x "$OP_SSH_SIGN" ]; then
 else
     fail "1Password の op-ssh-sign が無い（1Password のデスクトップアプリを入れる）"
 fi
-# brew の外で入れたアプリ（この Mac の手で入れたもの）は、cask の .app、cask が触る /Applications/ の下の
-# パス（pkg のアプリや delete・実行ファイル）、pkg のレシートのどれかが手元にあれば入っているとみなし、
-# brew bundle check から外す（新しい Mac では brew bundle が入れるので、ここでは外れない）
-manual_casks() {
-    local missing
-    missing=$(comm -23 <(brew bundle list --cask --file="$DOTFILES_DIR/Brewfile" 2>/dev/null | sed 's|.*/||' | sort) \
-                       <(brew list --cask -1 2>/dev/null | sort))
-    [ -n "$missing" ] || return 0
-    # shellcheck disable=SC2046,SC2086  # cask の名前とレシートの ID は空白を含まない
-    brew info --cask --json=v2 $missing 2>/dev/null | /usr/bin/osascript -l JavaScript -e '
-        ObjC.import("Foundation");
-        const exists = p => $.NSFileManager.defaultManager.fileExistsAtPath(p);
-        // 文字列をすべて取り出す（zap は消すときだけの場所なので見ない）
-        const strings = v => typeof v === "string" ? [v] : v && typeof v === "object"
-            ? Object.entries(v).flatMap(([k, x]) => k === "zap" ? [] : strings(x)) : [];
-        function run(receipts) {
-            const input = $.NSFileHandle.fileHandleWithStandardInput.readDataToEndOfFile;
-            const casks = JSON.parse($.NSString.alloc.initWithDataEncoding(input, 4).js).casks;
-            return casks.filter(c => c.artifacts.some(a =>
-                (a.app || []).some(x => exists("/Applications/" + (x.target || x).split("/").pop())) ||
-                strings(a).some(s => s.startsWith("/Applications/") && exists(s.split("/").slice(0, 3).join("/"))) ||
-                (a.uninstall || []).some(u => [].concat(u.pkgutil || []).some(id => receipts.includes(id)))
-            )).map(c => c.token).join(" ");
-        }' $(pkgutil --pkgs) 2>/dev/null
-}
-skip=$(manual_casks)
+# shellcheck source=lib/manual-casks.sh
+source "$DOTFILES_DIR/lib/manual-casks.sh"
+skip=$(manual_casks "$DOTFILES_DIR/Brewfile" || true)
 if HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_BUNDLE_CASK_SKIP="$skip" brew bundle check --file="$DOTFILES_DIR/Brewfile" >/dev/null 2>&1; then
     pass "brew bundle check（Brewfile のものがすべて入っている。brew の外で入っている cask: $(echo "$skip" | wc -w | tr -d ' ') 個）"
 else

@@ -37,7 +37,7 @@ cd ~/dotfiles
 | 1 | Xcode Command Line Tools | 何もしない（無ければ入れて止まるので、終わったらもう一度実行する） |
 | 2 | Homebrew | 何もしない |
 | 3 | 1Password のデスクトップアプリ | 何もしない |
-| 4 | `brew bundle --file=Brewfile` | `brew bundle check` が通れば何もしない |
+| 4 | `brew bundle --file=Brewfile` | `brew bundle check` が通れば何もしない。brew の外で入れたアプリ（`.app` や pkg のレシートがあるもの）は入れ直さない（`lib/manual-casks.sh`） |
 | 5 | リンク: `.zshrc` `.zprofile` `.gitconfig`、`.config/` の `starship.toml` `ghostty/config` `git/ignore` `mise/config.toml` `cmux/cmux.json`（`LINK_FILES`）、`.ssh/config`、VS Code と Cursor の `settings.json` `keybindings.json`（アプリがあるときだけ） | 正しいリンクなら何もしない。別のファイルがあれば `~/.dotfiles_backup/<日時>/` に退避してからリンクする |
 | 6 | VS Code と Cursor の拡張機能（`editors/extensions/*.txt`） | 入っているものは入れない |
 | 7 | `mise install`（Node の LTS）と `uv python install 3.12 --default`（`~/.local/bin/python3`） | 入っていれば何もしない |
@@ -108,6 +108,7 @@ brew bundle check --verbose --file=Brewfile         # Brewfile にあって入�
 ├── .githooks/pre-commit      # gitleaks による秘密情報の検査
 ├── archive/                  # 使わなくなった古いファイルの退避先
 ├── install.sh                # 新しい Mac を dotfiles の状態にする
+├── lib/manual-casks.sh       # brew の外で入れたアプリを brew bundle の対象から外す（install.sh・test.sh が使う）
 ├── rollback.sh               # install.sh のリンクと退避を戻す
 └── test.sh                   # この Mac が dotfiles の状態かを確かめる
 ```

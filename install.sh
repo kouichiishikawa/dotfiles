@@ -136,6 +136,11 @@ setup_brew_bundle() {
         plan "brew bundle --file=Brewfile（Homebrew を入れたあと）"
         return
     fi
+    # brew の外で入れたアプリは入れ直さない（既にあるアプリとぶつかって止まるため）
+    # shellcheck source=lib/manual-casks.sh
+    source "$DOTFILES_DIR/lib/manual-casks.sh"
+    HOMEBREW_BUNDLE_CASK_SKIP="$(manual_casks "$DOTFILES_DIR/Brewfile" || true)"
+    export HOMEBREW_BUNDLE_CASK_SKIP
     if HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --file="$DOTFILES_DIR/Brewfile" >/dev/null 2>&1; then
         return
     fi
