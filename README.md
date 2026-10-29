@@ -63,11 +63,12 @@ SSH が通ってから clone する（どちらも非公開）。
 git clone git@github.com:kouichiishikawa/agents.git ~/.agents
 git clone git@github.com:kouichiishikawa/brain.git ~/brain
 ```
-- 自分で作った launchd（`~/Library/LaunchAgents/com.kouichiishikawa.*`）・Claude Code のフック・スキルは dotfiles に入れない。`~/.agents` の README の手順で入れ直す
+- 自分で作った launchd（`~/Library/LaunchAgents/com.kouichiishikawa.*`）は dotfiles に入れない。plist の元がある `~/.agents`（`skills/*/launchd/`）と各リポジトリの `launchd/` から入れ直す。sprint-followup は `~/.agents/skills/sprint/references/watchdog.md` の「followup の入れ方」を見る
+- Claude Code のフック・スキルも dotfiles に入れない。`~/.agents` の README の手順で入れ直す
 - MCP サーバーのトークンは 1Password から入れ直す。値はこのリポジトリにも会話にも書き写さない
 
 ### 6. 手で入れ直すもの
-git の外にあるデータと、Brewfile に無いアプリの一覧は [docs/manual-migration.md](docs/manual-migration.md)（DEV-201 で作成予定）。
+git の外にあるデータと、Brewfile に無いアプリの一覧は [docs/manual-migration.md](docs/manual-migration.md)。
 
 ### 7. 確かめる
 ```bash
