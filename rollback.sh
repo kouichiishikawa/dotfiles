@@ -2,6 +2,11 @@
 
 set -eu
 
+# スクリプトの場所を基準にする（install.sh と同じ）
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# install.sh がホームにリンクするファイル（install.sh の LINK_FILES と揃える）
+LINK_FILES=(.zshrc .zprofile .gitconfig)
+
 # カラー定義
 ESC=$(printf '\033')
 RESET="${ESC}[0m"
@@ -78,14 +83,7 @@ select_backup_directory() {
 remove_symlinks() {
     log "Removing dotfiles symlinks..."
     
-    for dotfile in .??*; do
-        # 除外ファイル
-        [[ "$dotfile" == ".git" ]] && continue
-        [[ "$dotfile" == ".gitignore" ]] && continue
-        [[ "$dotfile" == ".DS_Store" ]] && continue
-        [[ "$dotfile" == ".Trash" ]] && continue
-        [[ "$dotfile" == ".ssh" ]] && continue
-        
+    for dotfile in "${LINK_FILES[@]}"; do
         local target="$HOME/$dotfile"
         
         if [ -L "$target" ]; then
@@ -212,15 +210,20 @@ main() {
     local current_dir=$(pwd)
     
     # dotfilesディレクトリに移動
-    cd "$HOME/dotfiles" || {
+    cd "$DOTFILES_DIR" || {
         error "Failed to change to dotfiles directory"
         exit 1
     }
     
     # ロールバック実行
     remove_symlinks
-    rollback_editors "$backup_dir"
-    rollback_ssh "$backup_dir"
+    # install.sh --links-only のバックアップなら、SSH とエディタは入れていないので触らない
+    if [ "$(cat "$backup_dir/install-scope" 2>/dev/null)" = "links-only" ]; then
+        info "Links-only install: skipping editor and SSH rollback"
+    else
+        rollback_editors "$backup_dir"
+        rollback_ssh "$backup_dir"
+    fi
     restore_dotfiles "$backup_dir"
     
     # 元のディレクトリに戻る

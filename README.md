@@ -10,11 +10,22 @@ cd ~/dotfiles
 ./install.sh
 ```
 
+- リンクするのは `.zshrc` `.zprofile` `.gitconfig` だけ（`install.sh` の `LINK_FILES`）。どのフォルダから実行しても同じ結果になる
+- リンクだけ作るときは `./install.sh --links-only`
+- Git の名前とメールアドレスはリポジトリに載せず、手元の `~/.gitconfig.local` に置く（`.gitconfig` が `[include]` で読む）
+  ```bash
+  git config --file ~/.gitconfig.local user.name  "<名前>"
+  git config --file ~/.gitconfig.local user.email "<メールアドレス>"
+  ```
+- コミット前に gitleaks で秘密情報を検査する（`.githooks/pre-commit`。`install.sh` が `core.hooksPath` を設定する）
+
 ## 含まれるもの
 ```
 - .zshrc - Zshシェルの設定（Python環境設定、Kiro統合含む）
 - .zprofile - ログインシェルの設定
-- .gitconfig - Gitの設定（SSH推奨設定含む）
+- .gitconfig - Gitの設定（SSH推奨設定含む。user は ~/.gitconfig.local）
+- .githooks/pre-commit - gitleaks による秘密情報の検査
+- archive/ - 使わなくなった古いファイルの退避先
 - .ssh/config - GitHub用SSH設定（ED25519鍵使用）
 - editors/ - エディタ設定
   ├── settings/ - 各エディタの設定ファイル（自動整形設定含む）

@@ -1,18 +1,18 @@
-[user]
-	name = kouichiishikawa
-	email = hello@kouichiishikawa.com
+# user.name / user.email は手元だけの ~/.gitconfig.local に置く（公開リポジトリに載せない）
+[include]
+	path = ~/.gitconfig.local
 [filter "lfs"]
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
 	required = true
 [core]
-	editor = cursor --wait
+	editor = code --wait
 	compression = 0
 	packedGitLimit = 512m
 	packedGitWindowSize = 512m
 [merge]
-	tool = cursor --wait \"$MERGED\"
+	tool = code --wait \"$MERGED\"
 [push]
 	default = simple
 [http]
