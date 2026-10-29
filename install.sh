@@ -203,7 +203,9 @@ setup_editor_extensions() {
 setup_runtimes() {
     log "mise（Node）と uv（Python ${PYTHON_VERSION}）"
     if has mise; then
-        if [ -n "$(mise ls --missing 2>/dev/null)" ] || [ ! -L "$HOME/.config/mise/config.toml" ]; then
+        # 調べられなかったとき（設定が信頼されていないなど）も入れる。mise install は設定を信頼してから入れる
+        local missing
+        if ! missing=$(mise ls --missing 2>&1) || [ -n "$missing" ]; then
             change CREATED "mise install（~/.config/mise/config.toml のツール）" mise install
         fi
     else
