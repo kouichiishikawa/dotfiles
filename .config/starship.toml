@@ -1,0 +1,75 @@
+# starship のプロンプト。p10k の rainbow（2 行・左の枠・丸い端・右に終了コードと実行時間）に寄せている
+# ~/.config/starship.toml にリンクする（install.sh の LINK_FILES）。記号は Nerd Font v3 が要る
+"$schema" = 'https://starship.rs/config-schema.json'
+
+add_newline = true
+
+format = """
+[╭─](fg:240)\
+[](fg:7)\
+$os\
+[](fg:7 bg:4)\
+$directory\
+[](fg:4 bg:2)\
+$git_branch\
+$git_status\
+[](fg:2)\
+$fill\
+$status\
+$cmd_duration\
+$jobs\
+$time
+[╰─](fg:240)$character"""
+
+[fill]
+symbol = ' '
+
+[os]
+disabled = false
+style = 'fg:232 bg:7'
+format = '[ $symbol ]($style)'
+
+[os.symbols]
+Macos = ''
+
+[directory]
+style = 'fg:254 bg:4'
+read_only_style = 'fg:254 bg:4'
+format = '[ $path ]($style)[$read_only]($read_only_style)'
+truncation_length = 4
+truncate_to_repo = false
+truncation_symbol = '…/'
+
+[git_branch]
+symbol = ' '
+style = 'fg:0 bg:2'
+format = '[ $symbol$branch ]($style)'
+
+[git_status]
+style = 'fg:0 bg:2'
+format = '[($all_status$ahead_behind )]($style)'
+
+[status]
+disabled = false
+symbol = '✘ '
+style = 'fg:196'
+format = '[$symbol$status ]($style)'
+
+[cmd_duration]
+min_time = 3_000
+style = 'fg:3'
+format = '[ $duration ]($style)'
+
+[jobs]
+style = 'fg:6'
+format = '[$symbol$number ]($style)'
+
+[time]
+disabled = false
+time_format = '%H:%M:%S'
+style = 'fg:66'
+format = '[ $time]($style)'
+
+[character]
+success_symbol = '[❯](fg:76)'
+error_symbol = '[❯](fg:196)'

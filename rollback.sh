@@ -5,7 +5,7 @@ set -eu
 # スクリプトの場所を基準にする（install.sh と同じ）
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # install.sh がホームにリンクするファイル（install.sh の LINK_FILES と揃える）
-LINK_FILES=(.zshrc .zprofile .gitconfig)
+LINK_FILES=(.zshrc .zprofile .gitconfig .config/starship.toml)
 
 # カラー定義
 ESC=$(printf '\033')
