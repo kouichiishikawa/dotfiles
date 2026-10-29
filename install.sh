@@ -205,8 +205,9 @@ setup_runtimes() {
     if has mise; then
         # 調べられなかったとき（設定が信頼されていないなど）も入れる。mise install は設定を信頼してから入れる
         local missing
-        if ! missing=$(mise ls --missing 2>&1) || [ -n "$missing" ]; then
-            change CREATED "mise install（~/.config/mise/config.toml のツール）" mise install
+        # HOME で動かす（実行したフォルダのプロジェクトの mise の設定を拾わない）
+        if ! missing=$(mise ls --missing -C "$HOME" 2>&1) || [ -n "$missing" ]; then
+            change CREATED "mise install（~/.config/mise/config.toml のツール）" mise install -C "$HOME"
         fi
     else
         plan "mise install（brew bundle で mise を入れたあと）"
