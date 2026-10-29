@@ -1,269 +1,113 @@
 #!/bin/bash
+# install.sh が作ったリンクを外し、退避したファイルを元の場所へ戻す
+#
+# 使い方: ./rollback.sh                 退避先を一覧から選ぶ（Enter で最新）
+#         ./rollback.sh <退避先>         その退避先から戻す（例: ~/.dotfiles_backup/20261029_120000）
+#         ./rollback.sh <退避先> --yes   確認せずに戻す
+#
+# install.sh は、作ったリンクを <退避先>/links.txt に、退避したものを <退避先>/<HOME からの相対パス> に残す。
+# ここではその 2 つだけを見る（links.txt に無いものは触らない）
 
 set -eu
 
-# スクリプトの場所を基準にする（install.sh と同じ）
+BACKUP_BASE="$HOME/.dotfiles_backup"
+# install.sh が作るリンクの先（このスクリプトの場所）
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# install.sh がホームにリンクするファイル（install.sh の LINK_FILES と揃える）
-LINK_FILES=(.zshrc .zprofile .gitconfig .config/starship.toml .config/ghostty/config .config/git/ignore .config/mise/config.toml)
 
-# カラー定義
 ESC=$(printf '\033')
-RESET="${ESC}[0m"
-BOLD="${ESC}[1m"
-RED="${ESC}[31m"
-GREEN="${ESC}[32m"
-BLUE="${ESC}[34m"
-YELLOW="${ESC}[33m"
+log()   { echo "${ESC}[32m==>${ESC}[0m ${ESC}[1m$1${ESC}[0m"; }
+info()  { echo "${ESC}[34m  -${ESC}[0m $1"; }
+warn()  { echo "${ESC}[33m  !${ESC}[0m $1"; }
+error() { echo "${ESC}[31m==>${ESC}[0m ${ESC}[1m$1${ESC}[0m" >&2; }
 
-log() {
-    echo -e "${GREEN}==>${RESET} ${BOLD}$1${RESET}"
-}
-
-error() {
-    echo -e "${RED}==>${RESET} ${BOLD}$1${RESET}"
-}
-
-info() {
-    echo -e "${BLUE}==>${RESET} ${BOLD}$1${RESET}"
-}
-
-warn() {
-    echo -e "${YELLOW}==>${RESET} ${BOLD}$1${RESET}"
-}
-
-# バックアップディレクトリの検索
-find_backup_directory() {
-    local backup_base="$HOME/.dotfiles_backup"
-    
-    if [ ! -d "$backup_base" ]; then
-        error "No backup directory found at $backup_base"
-        exit 1
-    fi
-    
-    # 最新のバックアップディレクトリを取得
-    local latest_backup=$(ls -1t "$backup_base" | head -1)
-    
-    if [ -z "$latest_backup" ]; then
-        error "No backup found in $backup_base"
-        exit 1
-    fi
-    
-    echo "$backup_base/$latest_backup"
-}
-
-# 特定のバックアップディレクトリを指定
+# 退避先を一覧から選ぶ。一覧と質問は標準エラーに出し、標準出力には選んだパスだけを出す
+# （$(...) で受け取るので、表示を標準出力に出すとパスに混ざる）
 select_backup_directory() {
-    local backup_base="$HOME/.dotfiles_backup"
-    
-    if [ ! -d "$backup_base" ]; then
-        error "No backup directory found at $backup_base"
-        exit 1
+    local backups selection picked
+    backups=$(ls -1t "$BACKUP_BASE" 2>/dev/null || true)
+    if [ -z "$backups" ]; then
+        error "退避先がありません: $BACKUP_BASE"
+        return 1
     fi
-    
-    info "Available backups:"
-    ls -1t "$backup_base" | nl -w2 -s') '
-    
-    echo -n "Select backup number (Enter for latest): "
-    read -r selection
-    
-    if [ -z "$selection" ]; then
-        find_backup_directory
-    else
-        local backup_dir=$(ls -1t "$backup_base" | sed -n "${selection}p")
-        if [ -z "$backup_dir" ]; then
-            error "Invalid selection"
-            exit 1
-        fi
-        echo "$backup_base/$backup_dir"
+    echo "退避先（新しい順）:" >&2
+    echo "$backups" | nl -w2 -s') ' >&2
+    printf "番号を選んでください（Enter で最新）: " >&2
+    read -r selection || true
+    selection=${selection:-1}
+    if [[ "$selection" =~ ^[1-9][0-9]*$ ]]; then
+        picked=$(echo "$backups" | sed -n "${selection}p")
     fi
+    if [ -z "${picked:-}" ]; then
+        error "選んだ番号がありません: $selection"
+        return 1
+    fi
+    echo "$BACKUP_BASE/$picked"
 }
 
-# シンボリックリンクの削除
-remove_symlinks() {
-    log "Removing dotfiles symlinks..."
-    
-    for dotfile in "${LINK_FILES[@]}"; do
-        local target="$HOME/$dotfile"
-        
-        if [ -L "$target" ]; then
-            info "Removing symlink: $dotfile"
-            rm "$target"
-        elif [ -e "$target" ]; then
-            warn "File exists but is not a symlink: $dotfile"
-        fi
-    done
-}
-
-# エディタ設定のロールバック
-rollback_editors() {
-    log "Rolling back editor configurations..."
-    
-    # VSCode
-    if [ -d "/Applications/Visual Studio Code.app" ]; then
-        info "Rolling back VSCode settings..."
-        local vscode_dir="$HOME/Library/Application Support/Code/User"
-        
-        # シンボリックリンクを削除
-        [ -L "$vscode_dir/settings.json" ] && rm "$vscode_dir/settings.json"
-        [ -L "$vscode_dir/keybindings.json" ] && rm "$vscode_dir/keybindings.json"
-        
-        # バックアップから復元
-        if [ -f "$1/vscode_settings.json" ]; then
-            info "Restoring VSCode settings"
-            mv "$1/vscode_settings.json" "$vscode_dir/settings.json"
-        fi
-        
-        if [ -f "$1/vscode_keybindings.json" ]; then
-            info "Restoring VSCode keybindings"
-            mv "$1/vscode_keybindings.json" "$vscode_dir/keybindings.json"
-        fi
-    fi
-    
-    # Cursor
-    if [ -d "/Applications/Cursor.app" ]; then
-        info "Rolling back Cursor settings..."
-        local cursor_dir="$HOME/Library/Application Support/Cursor/User"
-        
-        # シンボリックリンクを削除
-        [ -L "$cursor_dir/settings.json" ] && rm "$cursor_dir/settings.json"
-        [ -L "$cursor_dir/keybindings.json" ] && rm "$cursor_dir/keybindings.json"
-        
-        # バックアップから復元
-        if [ -f "$1/cursor_settings.json" ]; then
-            info "Restoring Cursor settings"
-            mv "$1/cursor_settings.json" "$cursor_dir/settings.json"
-        fi
-        
-        if [ -f "$1/cursor_keybindings.json" ]; then
-            info "Restoring Cursor keybindings"
-            mv "$1/cursor_keybindings.json" "$cursor_dir/keybindings.json"
-        fi
-    fi
-}
-
-# SSH設定のロールバック
-rollback_ssh() {
-    log "Rolling back SSH configuration..."
-    
-    if [ -L "$HOME/.ssh/config" ]; then
-        info "Removing SSH config symlink"
-        rm "$HOME/.ssh/config"
-    fi
-    
-    if [ -f "$1/config" ]; then
-        info "Restoring SSH config"
-        mv "$1/config" "$HOME/.ssh/config"
-        chmod 600 "$HOME/.ssh/config"
-    fi
-}
-
-# dotfilesの復元
-restore_dotfiles() {
-    local backup_dir="$1"
-    
-    log "Restoring dotfiles from: $backup_dir"
-    
-    # 入れ子のリンク対象（.config/starship.toml など）は、同じ相対パスへ戻す
-    for dotfile in "${LINK_FILES[@]}"; do
-        case "$dotfile" in */*) ;; *) continue ;; esac
-        # -L も見る: 相対リンクはバックアップへ移すとリンク先が解決できず -e が偽になる
-        [ -e "$backup_dir/$dotfile" ] || [ -L "$backup_dir/$dotfile" ] || continue
-        info "Restoring $dotfile"
-        mkdir -p "$(dirname "$HOME/$dotfile")"
-        mv "$backup_dir/$dotfile" "$HOME/$dotfile"
-        rmdir "$backup_dir/$(dirname "$dotfile")" 2>/dev/null || true
-    done
-
-    # バックアップディレクトリ内のファイルを復元（ディレクトリは上で扱った入れ子のものなので飛ばす）
-    for backup_file in "$backup_dir"/.??*; do
-        [ -e "$backup_file" ] || [ -L "$backup_file" ] || continue
-        [ -d "$backup_file" ] && [ ! -L "$backup_file" ] && continue
-
-        local filename=$(basename "$backup_file")
-        local target="$HOME/$filename"
-        
-        info "Restoring $filename"
-        mv "$backup_file" "$target"
-    done
-}
-
-# メイン処理
 main() {
-    log "Starting dotfiles rollback..."
-    
-    # 引数でバックアップディレクトリが指定されている場合
-    if [ $# -gt 0 ]; then
-        local backup_dir="$1"
-        if [ ! -d "$backup_dir" ]; then
-            error "Backup directory not found: $backup_dir"
-            exit 1
-        fi
-    else
-        # インタラクティブにバックアップを選択
-        local backup_dir=$(select_backup_directory)
+    local backup_dir="" yes=false arg
+    for arg in "$@"; do
+        case "$arg" in
+            -h|--help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+            --yes) yes=true ;;
+            *) backup_dir=$arg ;;
+        esac
+    done
+    if [ -z "$backup_dir" ]; then
+        backup_dir=$(select_backup_directory)
     fi
-    
-    info "Using backup: $backup_dir"
-    
-    # 確認
-    echo -n "Are you sure you want to rollback? (y/N): "
-    read -r confirm
-    case "$confirm" in
-        [yY]|[yY][eE][sS])
-            ;;
-        *)
-            info "Rollback cancelled"
-            exit 0
-            ;;
-    esac
-    
-    # 現在のディレクトリを保存
-    local current_dir=$(pwd)
-    
-    # dotfilesディレクトリに移動
-    cd "$DOTFILES_DIR" || {
-        error "Failed to change to dotfiles directory"
+    backup_dir=${backup_dir%/}
+    if [ ! -d "$backup_dir" ]; then
+        error "退避先がありません: $backup_dir"
         exit 1
-    }
-    
-    # ロールバック実行
-    remove_symlinks
-    # install.sh --links-only のバックアップなら、SSH とエディタは入れていないので触らない
-    if [ "$(cat "$backup_dir/install-scope" 2>/dev/null)" = "links-only" ]; then
-        info "Links-only install: skipping editor and SSH rollback"
-    else
-        rollback_editors "$backup_dir"
-        rollback_ssh "$backup_dir"
     fi
-    restore_dotfiles "$backup_dir"
-    
-    # 元のディレクトリに戻る
-    cd "$current_dir"
-    
-    # バックアップディレクトリを削除
-    if [ -d "$backup_dir" ] && [ -z "$(ls -A "$backup_dir")" ]; then
-        info "Removing empty backup directory"
-        rmdir "$backup_dir"
+    if [ -f "$backup_dir/links.txt.restored" ]; then
+        error "$backup_dir はもう戻してあります（links.txt.restored）。もう一度戻すと、戻したものを外してしまうので止めます"
+        exit 1
     fi
-    
-    log "Rollback completed successfully!"
-    info "Please restart your shell to apply changes"
-}
+    if [ ! -f "$backup_dir/links.txt" ]; then
+        error "$backup_dir/links.txt がありません（2026-10 より前の install.sh の退避先です）。中身を見て手で戻してください"
+        exit 1
+    fi
 
-# 使用方法の表示
-show_usage() {
-    echo "Usage: $0 [backup_directory]"
-    echo "  backup_directory: Specific backup directory to restore from"
-    echo "  If not specified, will show interactive selection"
-}
+    log "戻す元: $backup_dir"
+    if [ "$yes" = false ]; then
+        local confirm=""
+        printf "戻しますか？ (y/N): "
+        read -r confirm || true
+        case "$confirm" in
+            [yY]|[yY][eE][sS]) ;;
+            *) info "やめました"; exit 0 ;;
+        esac
+    fi
 
-# ヘルプオプション
-case "${1:-}" in
-    -h|--help)
-        show_usage
-        exit 0
-        ;;
-esac
+    local rel removed=0 restored=0
+    while IFS= read -r rel || [ -n "$rel" ]; do
+        [ -n "$rel" ] || continue
+        # dotfiles へのリンクだけを外す（それ以外のリンクやファイルは、人が置いたものなので残す）
+        if [ -L "$HOME/$rel" ] && [[ "$(readlink "$HOME/$rel")" == "$DOTFILES_DIR/"* ]]; then
+            info "リンクを外す: ~/$rel"
+            rm "$HOME/$rel"
+            removed=$((removed + 1))
+        elif [ -e "$HOME/$rel" ] || [ -L "$HOME/$rel" ]; then
+            warn "dotfiles へのリンクではないので残します: ~/$rel"
+            continue
+        fi
+        # -L も見る: 退避したのが相対リンクだと、移した先では解決できず -e が偽になる
+        if [ -e "$backup_dir/$rel" ] || [ -L "$backup_dir/$rel" ]; then
+            info "戻す: ~/$rel"
+            mkdir -p "$(dirname "$HOME/$rel")"
+            mv "$backup_dir/$rel" "$HOME/$rel"
+            restored=$((restored + 1))
+        fi
+    done < "$backup_dir/links.txt"
+
+    # 同じ退避先から 2 回戻さないように印を付ける
+    mv "$backup_dir/links.txt" "$backup_dir/links.txt.restored"
+
+    log "結果: リンクを外した $removed / 戻した $restored"
+    info "退避先は残してあります: ${backup_dir}（links.txt は links.txt.restored にした）"
+    info "新しいシェルを開いてください（exec zsh -l）"
+}
 
 main "$@"
