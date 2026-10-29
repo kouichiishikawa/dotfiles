@@ -1,0 +1,12 @@
+#!/bin/bash
+# コミットする内容（ステージ済みの変更）に秘密情報が無いかを gitleaks で検査する。
+# 有効にするには: git config core.hooksPath .githooks（install.sh が設定する）
+
+set -eu
+
+if ! command -v gitleaks > /dev/null 2>&1; then
+    echo "pre-commit: gitleaks がありません。brew install gitleaks で入れてください" >&2
+    exit 1
+fi
+
+gitleaks git --pre-commit --staged --redact --no-banner --verbose
