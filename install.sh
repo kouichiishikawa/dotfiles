@@ -1,311 +1,296 @@
 #!/bin/bash
+# 新しい Mac を dotfiles の状態にする。何度実行しても同じ結果になる（入っているものは触らない）
+#
+# 使い方: ./install.sh              すべて行う
+#         ./install.sh --dry-run    何をするかを一覧で出すだけで、何も変えない
+#         ./install.sh --links-only リンクだけ作る（Homebrew・mise・uv・拡張機能・macOS の設定はしない）
 
-set -eu
+set -Eeu
 
-# エラーハンドリング
-trap 'handle_error $? $LINENO' ERR
-
-handle_error() {
-    local exit_code=$1
-    local line_number=$2
-    error "Error occurred at line $line_number with exit code $exit_code"
-    
-    # ロールバックの実行
-    if [ -f "$DOTFILES_DIR/rollback.sh" ]; then
-        warn "Attempting to rollback changes..."
-        if [ -n "${BACKUP_DIR:-}" ] && [ -d "$BACKUP_DIR" ]; then
-            "$DOTFILES_DIR/rollback.sh" "$BACKUP_DIR"
-        fi
-    fi
-    
-    exit $exit_code
-}
-
-# 関数定義
-has() {
-    type "$1" > /dev/null 2>&1
-}
-
-# 必要なツールのチェック
-if ! has "git"; then
-    echo "Error: git is required"
-    exit 1
-fi
-
-# 定数定義
 # スクリプトの場所を基準にする（どのフォルダから実行しても同じ結果にする）
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# ホームにリンクするファイル（ここに書いたものだけをリンクする）
+# ホームにリンクするファイル（ここに書いたものだけをリンクする。rollback.sh・test.sh と揃える）
 LINK_FILES=(.zshrc .zprofile .gitconfig .config/starship.toml .config/ghostty/config .config/git/ignore .config/mise/config.toml)
+PYTHON_VERSION=3.12
+OP_AGENT_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
-# --links-only: リンクの作成だけを行う（Homebrew・Python・エディタの導入をしない）
+DRY_RUN=false
 LINKS_ONLY=false
-if [ "${1:-}" = "--links-only" ]; then
-    LINKS_ONLY=true
-fi
+for arg in "$@"; do
+    case "$arg" in
+        --dry-run) DRY_RUN=true ;;
+        --links-only) LINKS_ONLY=true ;;
+        -h|--help) sed -n '2,7p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) echo "不明な引数: ${arg}（--help で使い方を表示）" >&2; exit 1 ;;
+    esac
+done
+
+# 退避先は、退避するものが出たときに初めて作る（2 回目の実行で空のフォルダを増やさない）
 BACKUP_DIR="$HOME/.dotfiles_backup/$(date +%Y%m%d_%H%M%S)"
+CREATED=0
+LINKED=0
+BACKED_UP=0
+TODO=()
 
-# カラー定義
 ESC=$(printf '\033')
-RESET="${ESC}[0m"
-BOLD="${ESC}[1m"
-RED="${ESC}[31m"
-GREEN="${ESC}[32m"
-BLUE="${ESC}[34m"
-YELLOW="${ESC}[33m"
+log()  { echo "${ESC}[32m==>${ESC}[0m ${ESC}[1m$1${ESC}[0m"; }
+info() { echo "${ESC}[34m  -${ESC}[0m $1"; }
+warn() { echo "${ESC}[33m  !${ESC}[0m $1"; }
+plan() { echo "${ESC}[35m  +${ESC}[0m $1"; }
+has()  { command -v "$1" >/dev/null 2>&1; }
+todo() { TODO+=("$1"); }
 
-log() {
-    echo -e "${GREEN}==>${RESET} ${BOLD}$1${RESET}"
+# いま行っている変更（失敗したときに出す）
+STEP=""
+on_error() {
+    echo "${ESC}[31m==>${ESC}[0m 失敗しました: ${STEP:-$1}" >&2
+    if [ -f "$BACKUP_DIR/links.txt" ]; then
+        echo "    ここまでのリンクと退避は ./rollback.sh $BACKUP_DIR で戻せます" >&2
+    fi
+}
+trap 'on_error "$BASH_COMMAND"' ERR
+
+# 変更を 1 つ行う。--dry-run のときは、何をするかを出すだけにする
+# 使い方: change <数える欄 CREATED|LINKED|BACKED_UP> <説明> <コマンド...>
+change() {
+    local counter=$1 desc=$2
+    shift 2
+    plan "$desc"
+    STEP=$desc
+    eval "$counter=\$((\$$counter + 1))"
+    if [ "$DRY_RUN" = false ]; then
+        "$@"
+    fi
 }
 
-error() {
-    echo -e "${RED}==>${RESET} ${BOLD}$1${RESET}"
+backup() {
+    local rel=$1
+    mkdir -p "$(dirname "$BACKUP_DIR/$rel")"
+    mv "$HOME/$rel" "$BACKUP_DIR/$rel"
 }
 
-info() {
-    echo -e "${BLUE}==>${RESET} ${BOLD}$1${RESET}"
+make_link() {
+    local src=$1 rel=$2
+    mkdir -p "$(dirname "$HOME/$rel")"
+    ln -s "$src" "$HOME/$rel"
+    # rollback.sh が、このときに作ったリンクだけを外せるように残す
+    mkdir -p "$BACKUP_DIR"
+    echo "$rel" >> "$BACKUP_DIR/links.txt"
 }
 
-warn() {
-    echo -e "${YELLOW}==>${RESET} ${BOLD}$1${RESET}"
+# $HOME/<rel> を <src> へのリンクにする。正しいリンクなら何もしない。別のものがあれば退避する
+link() {
+    local src=$1 rel=$2
+    if [ -L "$HOME/$rel" ] && [ "$(readlink "$HOME/$rel")" = "$src" ]; then
+        return
+    fi
+    if [ -e "$HOME/$rel" ] || [ -L "$HOME/$rel" ]; then
+        change BACKED_UP "退避: ~/$rel → $BACKUP_DIR/$rel" backup "$rel"
+    fi
+    change LINKED "リンク: ~/$rel → $src" make_link "$src" "$rel"
 }
 
-# バックアップディレクトリの作成
-mkdir -p "$BACKUP_DIR"
-log "Created backup directory: $BACKUP_DIR"
-# rollback.sh が、入れていない部分（SSH・エディタ）を巻き戻さないように範囲を残す
-if [ "$LINKS_ONLY" = true ]; then
-    echo "links-only" > "$BACKUP_DIR/install-scope"
-fi
+setup_xcode_clt() {
+    log "Xcode Command Line Tools"
+    if xcode-select -p >/dev/null 2>&1; then
+        return
+    fi
+    change CREATED "Xcode Command Line Tools を入れる（画面の案内に従い、終わったらもう一度 ./install.sh）" xcode-select --install
+    if [ "$DRY_RUN" = false ]; then
+        exit 0
+    fi
+}
 
-# ドットファイルのシンボリックリンク作成
-create_symlinks() {
-    log "Creating symlinks..."
+install_homebrew() {
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+}
+
+setup_homebrew() {
+    log "Homebrew"
+    if ! has brew && [ -x /opt/homebrew/bin/brew ]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    fi
+    if has brew; then
+        return
+    fi
+    change CREATED "Homebrew を入れる" install_homebrew
+    if [ "$DRY_RUN" = false ]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    fi
+}
+
+# SSH の鍵とコミットの署名に要るので、brew bundle より先に入れる（Brewfile には入れていない）
+setup_1password() {
+    log "1Password"
+    if [ ! -d /Applications/1Password.app ]; then
+        change CREATED "1Password のデスクトップアプリを入れる" brew install --cask 1password
+    fi
+    if [ ! -S "$OP_AGENT_SOCK" ]; then
+        todo "1Password にサインインし、設定 > 開発者 で「SSH エージェントを使用」を有効にする"
+    fi
+}
+
+setup_brew_bundle() {
+    log "brew bundle（Brewfile）"
+    if ! has brew; then
+        plan "brew bundle --file=Brewfile（Homebrew を入れたあと）"
+        return
+    fi
+    if HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --file="$DOTFILES_DIR/Brewfile" >/dev/null 2>&1; then
+        return
+    fi
+    if [ "$DRY_RUN" = true ]; then
+        HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --verbose --file="$DOTFILES_DIR/Brewfile" 2>&1 | sed 's/^/    /' || true
+    fi
+    change CREATED "brew bundle --file=Brewfile（足りないものを入れる。App Store は先にサインインしておく）" \
+        brew bundle --file="$DOTFILES_DIR/Brewfile"
+}
+
+setup_links() {
+    log "リンク"
+    local dotfile
     for dotfile in "${LINK_FILES[@]}"; do
-        # 既存ファイルのバックアップ
-        if [ -e "$HOME/$dotfile" ] || [ -L "$HOME/$dotfile" ]; then
-            info "Backing up $dotfile"
-            # 相対パスのまま残す（rollback.sh が同じ場所へ戻す）
-            mkdir -p "$BACKUP_DIR/$(dirname "$dotfile")"
-            mv "$HOME/$dotfile" "$BACKUP_DIR/$dotfile"
-        fi
+        link "$DOTFILES_DIR/$dotfile" "$dotfile"
+    done
 
-        # シンボリックリンクの作成
-        info "Linking $dotfile"
-        mkdir -p "$(dirname "$HOME/$dotfile")"
-        ln -snfv "$DOTFILES_DIR/$dotfile" "$HOME/$dotfile"
+    # SSH（鍵は 1Password の SSH エージェントから使う）
+    if [ ! -d "$HOME/.ssh" ]; then
+        change CREATED "作る: ~/.ssh（700）" mkdir -m 700 "$HOME/.ssh"
+    elif [ "$(stat -f %OLp "$HOME/.ssh")" != 700 ]; then
+        change CREATED "権限: ~/.ssh を 700 にする" chmod 700 "$HOME/.ssh"
+    fi
+    link "$DOTFILES_DIR/.ssh/config" .ssh/config
+
+    # エディタ（入っているものだけ）
+    local app dir name key
+    for app in "Visual Studio Code:Code:vscode" "Cursor:Cursor:cursor"; do
+        IFS=: read -r name dir key <<< "$app"
+        [ -d "/Applications/$name.app" ] || continue
+        link "$DOTFILES_DIR/editors/settings/$key.json" "Library/Application Support/$dir/User/settings.json"
+        link "$DOTFILES_DIR/editors/keybindings/$key.json" "Library/Application Support/$dir/User/keybindings.json"
     done
 }
 
-# Git のユーザー情報（公開リポジトリに載せないため ~/.gitconfig.local に置く）
-check_gitconfig_local() {
-    if [ ! -f "$HOME/.gitconfig.local" ]; then
-        warn "~/.gitconfig.local がありません。次のように作ってください:"
-        warn "  git config --file ~/.gitconfig.local user.name  \"<名前>\""
-        warn "  git config --file ~/.gitconfig.local user.email \"<メールアドレス>\""
+# editors/extensions/<key>.txt のうち、まだ入っていない拡張機能だけを入れる
+setup_editor_extensions() {
+    log "エディタの拡張機能"
+    local pair cli key installed ext
+    for pair in "code:vscode" "cursor:cursor"; do
+        IFS=: read -r cli key <<< "$pair"
+        if ! has "$cli"; then
+            continue
+        fi
+        installed=$("$cli" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')
+        while IFS= read -r ext || [ -n "$ext" ]; do
+            [ -n "$ext" ] || continue
+            if grep -qxF "$(echo "$ext" | tr '[:upper:]' '[:lower:]')" <<< "$installed"; then
+                continue
+            fi
+            plan "$cli に入れる: $ext"
+            if [ "$DRY_RUN" = true ]; then
+                CREATED=$((CREATED + 1))
+            elif "$cli" --install-extension "$ext" --force >/dev/null 2>&1; then
+                CREATED=$((CREATED + 1))
+            else
+                # Marketplace から消えたものがあっても、ほかの手順は止めない（数には入れない）
+                warn "入れられませんでした: ${ext}（editors/extensions/$key.txt から外すか、手で入れる）"
+                todo "$cli の拡張機能 $ext を入れられなかった（editors/extensions/$key.txt を見直す）"
+            fi
+        done < "$DOTFILES_DIR/editors/extensions/$key.txt"
+    done
+}
+
+setup_runtimes() {
+    log "mise（Node）と uv（Python ${PYTHON_VERSION}）"
+    if has mise; then
+        if [ -n "$(mise ls --missing 2>/dev/null)" ] || [ ! -L "$HOME/.config/mise/config.toml" ]; then
+            change CREATED "mise install（~/.config/mise/config.toml のツール）" mise install
+        fi
+    else
+        plan "mise install（brew bundle で mise を入れたあと）"
+    fi
+    if has uv; then
+        if ! readlink "$HOME/.local/bin/python3" 2>/dev/null | grep -q "uv/python/cpython-$PYTHON_VERSION"; then
+            change CREATED "uv python install $PYTHON_VERSION --default（~/.local/bin/python3）" \
+                uv python install "$PYTHON_VERSION" --default
+        fi
+    else
+        plan "uv python install $PYTHON_VERSION --default（brew bundle で uv を入れたあと）"
     fi
 }
 
 # コミット前に gitleaks で秘密情報を検査する
 setup_git_hooks() {
-    log "Setting up git hooks..."
-    git -C "$DOTFILES_DIR" config core.hooksPath .githooks
-    if ! has "gitleaks"; then
-        warn "gitleaks がありません。brew install gitleaks で入れてください"
+    log "git の hook（gitleaks）"
+    if [ "$(git -C "$DOTFILES_DIR" config core.hooksPath || true)" != .githooks ]; then
+        change CREATED "git config core.hooksPath .githooks" git -C "$DOTFILES_DIR" config core.hooksPath .githooks
     fi
 }
 
-# SSHの設定（鍵は 1Password の SSH エージェントから使う）
-setup_ssh() {
-    log "Setting up SSH config..."
-    if [ -f "$DOTFILES_DIR/.ssh/config" ]; then
-        mkdir -p "$HOME/.ssh"
-        chmod 700 "$HOME/.ssh"
-
-        # 既存のSSH configをバックアップ（リンクも含める。rollback.sh が $BACKUP_DIR/config から戻す）
-        if [ -e "$HOME/.ssh/config" ] || [ -L "$HOME/.ssh/config" ]; then
-            info "Backing up existing SSH config"
-            mv "$HOME/.ssh/config" "$BACKUP_DIR/"
-        fi
-
-        info "Linking SSH config"
-        ln -snfv "$DOTFILES_DIR/.ssh/config" "$HOME/.ssh/config"
-        chmod 600 "$HOME/.ssh/config"
-
-        if [ ! -S "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock" ]; then
-            warn "1Password の SSH エージェントが見つかりません。1Password の設定 > 開発者 で有効にしてください"
-        fi
+# 確認してから入れる（入れると Dock・Finder が再起動する）。--dry-run・確認できないときは入れない
+setup_macos_defaults() {
+    log "macOS の設定（macos/defaults.sh）"
+    if [ "$DRY_RUN" = true ]; then
+        plan "（実行時に確認）./macos/defaults.sh"
+        return
     fi
+    local answer=""
+    printf "  macOS の設定（Dock・Finder・キーボード・トラックパッド）を入れますか？ (y/N): "
+    read -r answer || true
+    case "$answer" in
+        [yY]|[yY][eE][sS]) "$DOTFILES_DIR/macos/defaults.sh"; info "macOS の設定を入れました" ;;
+        *) info "入れませんでした（あとで ./macos/defaults.sh で入れられます）" ;;
+    esac
 }
 
-# エディタの設定
-setup_editors() {
-    log "Setting up editor configurations..."
-    
-    # VSCode
-    if [ -d "/Applications/Visual Studio Code.app" ]; then
-        info "Setting up VSCode..."
-        mkdir -p "$HOME/Library/Application Support/Code/User"
-        
-        # バックアップ
-        if [ -f "$HOME/Library/Application Support/Code/User/settings.json" ]; then
-            mv "$HOME/Library/Application Support/Code/User/settings.json" "$BACKUP_DIR/vscode_settings.json"
-        fi
-        if [ -f "$HOME/Library/Application Support/Code/User/keybindings.json" ]; then
-            mv "$HOME/Library/Application Support/Code/User/keybindings.json" "$BACKUP_DIR/vscode_keybindings.json"
-        fi
-        
-        # シンボリックリンク作成
-        info "Linking VSCode settings"
-        ln -snfv "$DOTFILES_DIR/editors/settings/vscode.json" "$HOME/Library/Application Support/Code/User/settings.json"
-        ln -snfv "$DOTFILES_DIR/editors/keybindings/vscode.json" "$HOME/Library/Application Support/Code/User/keybindings.json"
-
-        # 拡張機能のインストール
-        info "Installing VSCode extensions"
-        while IFS= read -r extension || [ -n "$extension" ]; do
-            code --install-extension "$extension"
-        done < "$DOTFILES_DIR/editors/extensions/vscode.txt"
+# 機械では決められない残りの作業を集める（~ は表示用の文字なので展開しない）
+# shellcheck disable=SC2088
+collect_todo() {
+    if [ ! -f "$HOME/.gitconfig.local" ]; then
+        todo "~/.gitconfig.local に user.name・user.email・user.signingkey を書く（README の「Git の名前と署名」）"
     fi
-    
-    # Cursor
-    if [ -d "/Applications/Cursor.app" ]; then
-        info "Setting up Cursor..."
-        mkdir -p "$HOME/Library/Application Support/Cursor/User"
-        
-        # バックアップ
-        if [ -f "$HOME/Library/Application Support/Cursor/User/settings.json" ]; then
-            mv "$HOME/Library/Application Support/Cursor/User/settings.json" "$BACKUP_DIR/cursor_settings.json"
-        fi
-        if [ -f "$HOME/Library/Application Support/Cursor/User/keybindings.json" ]; then
-            mv "$HOME/Library/Application Support/Cursor/User/keybindings.json" "$BACKUP_DIR/cursor_keybindings.json"
-        fi
-        
-        # シンボリックリンク作成
-        info "Linking Cursor settings"
-        ln -snfv "$DOTFILES_DIR/editors/settings/cursor.json" "$HOME/Library/Application Support/Cursor/User/settings.json"
-        ln -snfv "$DOTFILES_DIR/editors/keybindings/cursor.json" "$HOME/Library/Application Support/Cursor/User/keybindings.json"
-
-        # 拡張機能のインストール
-        info "Installing Cursor extensions"
-        while IFS= read -r extension || [ -n "$extension" ]; do
-            cursor --install-extension "$extension"
-        done < "$DOTFILES_DIR/editors/extensions/cursor.txt"
+    if ! ssh -o BatchMode=yes -o ConnectTimeout=5 -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+        todo "ssh -T git@github.com が通ることを確かめる（1Password に SSH 鍵を入れ、GitHub に公開鍵を登録する）"
     fi
+    [ -d "$HOME/.agents" ] || todo "~/.agents を clone して、その手順で launchd とフックを入れ直す（README の「Agent 基盤」）"
+    [ -d "$HOME/brain" ] || todo "~/brain を clone する（README の「Agent 基盤」）"
+    todo "MCP のトークンを 1Password から入れ直す（README の「Agent 基盤」。値は書き写さない）"
+    todo "git の外のデータと手で入れ直すアプリ（docs/manual-migration.md）"
 }
 
-# Homebrewがインストールされているか確認
-setup_homebrew() {
-    if ! has "brew"; then
-        log "Installing Homebrew..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    else
-        log "Homebrew is already installed"
-    fi
-}
-
-# Python環境のセットアップ
-setup_python() {
-    log "Setting up Python environment..."
-    
-    # pyenvのインストール
-    if ! has "pyenv"; then
-        info "Installing pyenv..."
-        if has "brew"; then
-            if ! brew install pyenv; then
-                error "Failed to install pyenv"
-                return 1
-            fi
-        else
-            error "Homebrew is required to install pyenv"
-            return 1
-        fi
-    else
-        info "pyenv is already installed"
-    fi
-    
-    # pyenvの初期化
-    export PYENV_ROOT="$HOME/.pyenv" 
-    export PATH="$PYENV_ROOT/bin:$PATH"
-    
-    # pyenvが正しく初期化できるかチェック
-    if ! eval "$(pyenv init -)"; then
-        error "Failed to initialize pyenv"
-        return 1
-    fi
-    
-    # 最新安定版Pythonのインストール
-    if ! pyenv versions | grep -q "3.11"; then
-        info "Installing Python 3.11..."
-        if ! pyenv install 3.11.9; then
-            error "Failed to install Python 3.11.9"
-            return 1
-        fi
-        if ! pyenv global 3.11.9; then
-            error "Failed to set Python 3.11.9 as global"
-            return 1
-        fi
-    else
-        info "Python 3.11 is already installed"
-    fi
-    
-    # Poetryのインストール
-    if ! has "poetry"; then
-        info "Installing Poetry..."
-        if ! curl -sSL https://install.python-poetry.org | python3 -; then
-            error "Failed to install Poetry"
-            return 1
-        fi
-        export PATH="$HOME/.local/bin:$PATH"
-        
-        # Poetryが正しくインストールされたかチェック
-        if ! command -v poetry >/dev/null 2>&1; then
-            error "Poetry installation verification failed"
-            return 1
-        fi
-    else
-        info "Poetry is already installed"
-    fi
-    
-    # pipの設定ディレクトリ作成
-    if ! mkdir -p "$HOME/.pip"; then
-        error "Failed to create .pip directory"
-        return 1
-    fi
-    
-    # Jupyter設定ディレクトリ作成
-    if ! mkdir -p "$HOME/.jupyter"; then
-        error "Failed to create .jupyter directory"
-        return 1
-    fi
-    
-    info "Python environment setup completed"
-}
-
-# メイン処理
 main() {
-    log "Start setup..."
-    
-    # 既存のdotfilesディレクトリをチェック
-    if [ -d "$DOTFILES_DIR" ]; then
-        create_symlinks
-        check_gitconfig_local
-        if [ "$LINKS_ONLY" = true ]; then
-            log "Links created (--links-only)"
-            return
-        fi
-        setup_git_hooks
-        setup_ssh
-        setup_editors
-        setup_homebrew
-        setup_python
-    else
-        error "dotfiles directory not found: $DOTFILES_DIR"
-        exit 1
+    if [ "$DRY_RUN" = true ]; then
+        log "--dry-run: 何も変えずに、実行したら行うことを「+」で出します"
     fi
+    if [ "$LINKS_ONLY" = false ]; then
+        setup_xcode_clt
+        setup_homebrew
+        setup_1password
+        setup_brew_bundle
+    fi
+    setup_links
+    if [ "$LINKS_ONLY" = false ]; then
+        setup_editor_extensions
+        setup_runtimes
+        setup_git_hooks
+        setup_macos_defaults
+    fi
+    collect_todo
 
-    log "Setup completed successfully!"
-    info "Backup can be found in: $BACKUP_DIR"
-    info "Please restart your shell or run: source ~/.zshrc"
+    echo
+    log "結果: 作る・入れる $CREATED / リンク $LINKED / 退避 $BACKED_UP"
+    if [ "$BACKED_UP" -gt 0 ] && [ "$DRY_RUN" = false ]; then
+        info "退避先: ${BACKUP_DIR}（戻すときは ./rollback.sh ${BACKUP_DIR}）"
+    fi
+    echo
+    log "人がやること"
+    local item
+    for item in "${TODO[@]}"; do
+        info "$item"
+    done
+    if [ "$DRY_RUN" = false ]; then
+        info "新しいシェルを開く（exec zsh -l）"
+    fi
 }
 
 main
