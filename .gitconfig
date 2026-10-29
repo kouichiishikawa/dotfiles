@@ -1,6 +1,5 @@
-# user.name / user.email は手元だけの ~/.gitconfig.local に置く（公開リポジトリに載せない）
-[include]
-	path = ~/.gitconfig.local
+# 人によって違う値（user.name・user.email・user.signingkey）は手元だけの ~/.gitconfig.local に置く
+# （公開リポジトリに載せない）。最後に読み込むので、ここの値を上書きできる
 [filter "lfs"]
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
@@ -8,28 +7,35 @@
 	required = true
 [core]
 	editor = code --wait
-	compression = 0
-	packedGitLimit = 512m
-	packedGitWindowSize = 512m
+	pager = delta
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
 [merge]
 	tool = code --wait \"$MERGED\"
+[init]
+	defaultBranch = main
+[pull]
+	rebase = true
+[fetch]
+	prune = true
 [push]
 	default = simple
-[http]
-	postBuffer = 524288000
-[pack]
-	deltaCacheSize = 512m
-	packSizeLimit = 512m
-	windowMemory = 512m
 [url "git@github.com:"]
 	insteadOf = https://github.com/
+# 署名は 1Password の SSH 鍵で行う（鍵は ~/.gitconfig.local の user.signingkey）
 [gpg]
 	format = ssh
+[gpg "ssh"]
+	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
 [commit]
-	gpgsign = false
+	gpgsign = true
 [credential "https://github.com"]
-	helper = 
+	helper =
 	helper = !/opt/homebrew/bin/gh auth git-credential
 [credential "https://gist.github.com"]
-	helper = 
+	helper =
 	helper = !/opt/homebrew/bin/gh auth git-credential
+[include]
+	path = ~/.gitconfig.local
