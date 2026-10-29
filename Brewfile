@@ -72,7 +72,7 @@ brew "zsh-syntax-highlighting"
 # The AI coding agent built for the terminal.
 brew "anomalyco/tap/opencode", trusted: true
 # Supabase CLI
-brew "supabase/tap/supabase"
+brew "supabase/tap/supabase", trusted: true
 # Command-line interface for 1Password
 cask "1password-cli"
 # Web browser with built-in AI assistant
@@ -86,7 +86,8 @@ cask "font-moralerspace"
 cask "gcloud-cli"
 # Agent-centric IDE with spec-driven development
 cask "kiro"
-cask "xurl"
+# X API の CLI（tap の信頼は完全名の行にだけ効く）
+cask "xdevplatform/tap/xurl", trusted: true
 mas "1Password for Safari", id: 1569813296
 mas "DaVinci Resolve", id: 571213070
 mas "iMovie", id: 408981434
