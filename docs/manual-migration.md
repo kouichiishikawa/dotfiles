@@ -117,6 +117,7 @@ App Store のアプリ（`mas list` の 10 個）は全部 Brewfile にある。
 
 ```bash
 DEST=/Volumes/Migration/old-mac
+mkdir -p "$DEST"   # GNU rsync は途中のフォルダを作らない（macOS 付属の openrsync は作る）
 
 # 1) git のリポジトリの一覧（コピーから除く）
 find ~/Documents -name node_modules -prune -o -type d -name .git -print \
@@ -130,6 +131,8 @@ rsync -a ~/Library/Fonts/ "$DEST/Fonts/"
 # 3) 音楽・写真・動画の作業データ
 rsync -a ~/Music/MainStage ~/Music/"Audio Music Apps" ~/Music/Music "$DEST/Music/"
 rsync -a ~/Pictures/Lightroom "$DEST/Pictures/"
+# iCloud 写真が無効なときだけ（写真アプリを閉じてから）
+rsync -a ~/Pictures/"Photos Library.photoslibrary" "$DEST/Pictures/"
 rsync -a ~/Movies/ "$DEST/Movies/"
 
 # 4) リポジトリの中の秘密のファイル（場所を保ったまま）
