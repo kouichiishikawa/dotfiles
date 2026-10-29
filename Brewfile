@@ -77,8 +77,6 @@ brew "supabase/tap/supabase"
 cask "1password-cli"
 # Web browser with built-in AI assistant
 cask "aside"
-# Automated testing of webapps for Google Chrome
-cask "chromedriver"
 # App to build and share containerised applications and microservices
 cask "docker-desktop"
 cask "font-hackgen-nerd"
