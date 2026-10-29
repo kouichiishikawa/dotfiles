@@ -1,0 +1,24 @@
+# Theme
+theme = Vercel
+# キャレット色（テーマのピンクを上書き）
+cursor-color = #316EEE
+
+# Font
+# Moralerspace Neon (日本語対応プログラミングフォント)
+font-family = "Moralerspace Neon"
+font-size = 14
+
+# Line Height (デフォルト: 0 = 1.0倍)
+# 10% = 約1.1倍
+adjust-cell-height = 10%
+
+# Window behavior
+window-inherit-working-directory = true
+# 新規ワークスペースはホーム、新規タブは現在のワークスペースの場所で開く
+working-directory = home
+tab-inherit-working-directory = true
+window-save-state = always
+macos-titlebar-style = tabs
+
+# Keybindings
+keybind = shift+enter=text:\x1b\r
