@@ -36,7 +36,7 @@ fi
 # スクリプトの場所を基準にする（どのフォルダから実行しても同じ結果にする）
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # ホームにリンクするファイル（ここに書いたものだけをリンクする）
-LINK_FILES=(.zshrc .zprofile .gitconfig .config/starship.toml)
+LINK_FILES=(.zshrc .zprofile .gitconfig .config/starship.toml .config/ghostty/config .config/git/ignore .config/mise/config.toml)
 
 # --links-only: リンクの作成だけを行う（Homebrew・Python・エディタの導入をしない）
 LINKS_ONLY=false
@@ -115,15 +115,15 @@ setup_git_hooks() {
     fi
 }
 
-# SSHの設定
+# SSHの設定（鍵は 1Password の SSH エージェントから使う）
 setup_ssh() {
     log "Setting up SSH config..."
     if [ -f "$DOTFILES_DIR/.ssh/config" ]; then
         mkdir -p "$HOME/.ssh"
         chmod 700 "$HOME/.ssh"
-        
-        # 既存のSSH configをバックアップ
-        if [ -f "$HOME/.ssh/config" ]; then
+
+        # 既存のSSH configをバックアップ（リンクも含める。rollback.sh が $BACKUP_DIR/config から戻す）
+        if [ -e "$HOME/.ssh/config" ] || [ -L "$HOME/.ssh/config" ]; then
             info "Backing up existing SSH config"
             mv "$HOME/.ssh/config" "$BACKUP_DIR/"
         fi
@@ -131,6 +131,10 @@ setup_ssh() {
         info "Linking SSH config"
         ln -snfv "$DOTFILES_DIR/.ssh/config" "$HOME/.ssh/config"
         chmod 600 "$HOME/.ssh/config"
+
+        if [ ! -S "$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock" ]; then
+            warn "1Password の SSH エージェントが見つかりません。1Password の設定 > 開発者 で有効にしてください"
+        fi
     fi
 }
 

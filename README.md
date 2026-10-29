@@ -10,13 +10,18 @@ cd ~/dotfiles
 ./install.sh
 ```
 
-- リンクするのは `.zshrc` `.zprofile` `.gitconfig` `.config/starship.toml`（→ `~/.config/starship.toml`）だけ（`install.sh` の `LINK_FILES`）。どのフォルダから実行しても同じ結果になる
+- リンクするのは `.zshrc` `.zprofile` `.gitconfig` と `.config/` の `starship.toml` `ghostty/config` `git/ignore` `mise/config.toml`（→ `~/.config/` の同じ場所）だけ（`install.sh` の `LINK_FILES`）。`.ssh/config` は `setup_ssh` がリンクする。どのフォルダから実行しても同じ結果になる
 - リンクだけ作るときは `./install.sh --links-only`
-- Git の名前とメールアドレスはリポジトリに載せず、手元の `~/.gitconfig.local` に置く（`.gitconfig` が `[include]` で読む）
+- Homebrew と App Store のアプリは `brew bundle --file=Brewfile` で入れ、`brew bundle check --file=Brewfile` で確かめる（App Store は先にサインインしておく）
+- macOS の設定（Dock・Finder・キーボード・トラックパッド）は `./macos/defaults.sh` で入れる
+- SSH の鍵とコミットの署名は 1Password の SSH エージェントを使う（1Password の設定 > 開発者 で有効にする）
+- Git の名前・メールアドレス・署名の鍵はリポジトリに載せず、手元の `~/.gitconfig.local` に置く（`.gitconfig` が最後に `[include]` で読む）
   ```bash
   git config --file ~/.gitconfig.local user.name  "<名前>"
   git config --file ~/.gitconfig.local user.email "<メールアドレス>"
+  git config --file ~/.gitconfig.local user.signingkey "<1Password の SSH 公開鍵>"
   ```
+- 自分で作った launchd（`~/Library/LaunchAgents/com.kouichiishikawa.*`）は dotfiles に入れない。移行するときは `~/.agents` から入れ直す
 - コミット前に gitleaks で秘密情報を検査する（`.githooks/pre-commit`。`install.sh` が `core.hooksPath` を設定する）
 
 ## 含まれるもの
@@ -24,10 +29,15 @@ cd ~/dotfiles
 - .zshrc - Zshシェルの設定（mise・starship・fzf・zoxide・atuin・zsh のプラグイン）
 - .config/starship.toml - プロンプト（starship）の設定
 - .zprofile - ログインシェルの設定
-- .gitconfig - Gitの設定（SSH推奨設定含む。user は ~/.gitconfig.local）
+- .gitconfig - Gitの設定（delta・1Password の SSH 署名。user と署名の鍵は ~/.gitconfig.local）
+- .config/ghostty/config - ターミナル（Ghostty）の設定
+- .config/git/ignore - Git の全体の ignore
+- .config/mise/config.toml - mise で入れるツール（Node の LTS）
+- Brewfile - Homebrew の formula・cask と App Store のアプリ
+- macos/defaults.sh - macOS の設定（defaults write）
 - .githooks/pre-commit - gitleaks による秘密情報の検査
 - archive/ - 使わなくなった古いファイルの退避先
-- .ssh/config - GitHub用SSH設定（ED25519鍵使用）
+- .ssh/config - SSH の設定（1Password の SSH エージェントを使う）
 - editors/ - エディタ設定
   ├── settings/ - 各エディタの設定ファイル（自動整形設定含む）
   ├── keybindings/ - キーバインド設定
@@ -42,7 +52,7 @@ cd ~/dotfiles
 - 既存のdotfilesの自動バックアップ
 - Homebrewのインストール確認
 - Python開発環境の自動構築 (pyenv, Poetry, Jupyter)
-- GitHub SSH接続の自動設定（ED25519鍵使用）
+- SSH の設定のリンク（1Password の SSH エージェントを使う）
 - エラーハンドリング機能付きの安全なインストール
 - 自動ロールバック機能
 - 包括的な設定検証機能
