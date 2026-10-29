@@ -4,6 +4,11 @@
 これはkouichiishikawaの開発環境のセットアップ用dotfilesです。
 
 ## インストール方法
+先に 1Password のデスクトップアプリを入れてサインインし、設定 > 開発者 で「SSH エージェントを使用」を有効にしておく（Brewfile には入れていない）。SSH の鍵（`.ssh/config`）とコミットの署名（`.gitconfig` の `op-ssh-sign`）がこのアプリに頼っているので、無いと `git clone` もコミットも通らない。
+```bash
+brew install --cask 1password   # 公式サイト（https://1password.com/downloads/mac）から入れてもよい
+```
+
 ```bash
 git clone git@github.com:kouichiishikawa/dotfiles.git ~/dotfiles
 cd ~/dotfiles
