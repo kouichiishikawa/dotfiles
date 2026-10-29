@@ -217,8 +217,13 @@ main() {
     
     # ロールバック実行
     remove_symlinks
-    rollback_editors "$backup_dir"
-    rollback_ssh "$backup_dir"
+    # install.sh --links-only のバックアップなら、SSH とエディタは入れていないので触らない
+    if [ "$(cat "$backup_dir/install-scope" 2>/dev/null)" = "links-only" ]; then
+        info "Links-only install: skipping editor and SSH rollback"
+    else
+        rollback_editors "$backup_dir"
+        rollback_ssh "$backup_dir"
+    fi
     restore_dotfiles "$backup_dir"
     
     # 元のディレクトリに戻る

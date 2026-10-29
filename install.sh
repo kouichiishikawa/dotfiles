@@ -73,6 +73,10 @@ warn() {
 # バックアップディレクトリの作成
 mkdir -p "$BACKUP_DIR"
 log "Created backup directory: $BACKUP_DIR"
+# rollback.sh が、入れていない部分（SSH・エディタ）を巻き戻さないように範囲を残す
+if [ "$LINKS_ONLY" = true ]; then
+    echo "links-only" > "$BACKUP_DIR/install-scope"
+fi
 
 # ドットファイルのシンボリックリンク作成
 create_symlinks() {
