@@ -11,6 +11,8 @@
 set -eu
 
 BACKUP_BASE="$HOME/.dotfiles_backup"
+# install.sh が作るリンクの先（このスクリプトの場所）
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 ESC=$(printf '\033')
 log()   { echo "${ESC}[32m==>${ESC}[0m ${ESC}[1m$1${ESC}[0m"; }
@@ -59,6 +61,10 @@ main() {
         error "退避先がありません: $backup_dir"
         exit 1
     fi
+    if [ -f "$backup_dir/links.txt.restored" ]; then
+        error "$backup_dir はもう戻してあります（links.txt.restored）。もう一度戻すと、戻したものを外してしまうので止めます"
+        exit 1
+    fi
     if [ ! -f "$backup_dir/links.txt" ]; then
         error "$backup_dir/links.txt がありません（2026-10 より前の install.sh の退避先です）。中身を見て手で戻してください"
         exit 1
@@ -78,13 +84,13 @@ main() {
     local rel removed=0 restored=0
     while IFS= read -r rel || [ -n "$rel" ]; do
         [ -n "$rel" ] || continue
-        # 自分が作ったリンクだけを外す（リンクでなくなっていたら、人が置いたものなので残す）
-        if [ -L "$HOME/$rel" ]; then
+        # dotfiles へのリンクだけを外す（それ以外のリンクやファイルは、人が置いたものなので残す）
+        if [ -L "$HOME/$rel" ] && [[ "$(readlink "$HOME/$rel")" == "$DOTFILES_DIR/"* ]]; then
             info "リンクを外す: ~/$rel"
             rm "$HOME/$rel"
             removed=$((removed + 1))
-        elif [ -e "$HOME/$rel" ]; then
-            warn "リンクではないので残します: ~/$rel"
+        elif [ -e "$HOME/$rel" ] || [ -L "$HOME/$rel" ]; then
+            warn "dotfiles へのリンクではないので残します: ~/$rel"
             continue
         fi
         # -L も見る: 退避したのが相対リンクだと、移した先では解決できず -e が偽になる
@@ -96,8 +102,11 @@ main() {
         fi
     done < "$backup_dir/links.txt"
 
+    # 同じ退避先から 2 回戻さないように印を付ける
+    mv "$backup_dir/links.txt" "$backup_dir/links.txt.restored"
+
     log "結果: リンクを外した $removed / 戻した $restored"
-    info "退避先は残してあります: $backup_dir"
+    info "退避先は残してあります: ${backup_dir}（links.txt は links.txt.restored にした）"
     info "新しいシェルを開いてください（exec zsh -l）"
 }
 
