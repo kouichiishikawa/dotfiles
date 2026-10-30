@@ -81,10 +81,27 @@ fi
 # shellcheck source=lib/manual-casks.sh
 source "$REPO_DIR/lib/manual-casks.sh"
 skip=$(manual_casks "$REPO_DIR/Brewfile" || true)
-if HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_BUNDLE_CASK_SKIP="$skip" brew bundle check --file="$REPO_DIR/Brewfile" >/dev/null 2>&1; then
+# 更新待ちは「足りない」と数えない（--no-upgrade）
+if HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_BUNDLE_CASK_SKIP="$skip" brew bundle check --no-upgrade --file="$REPO_DIR/Brewfile" >/dev/null 2>&1; then
     pass "brew bundle check（Brewfile のものがすべて入っている。brew の外で入っている cask: $(echo "$skip" | wc -w | tr -d ' ') 個）"
 else
-    fail "brew bundle check が通らない（brew bundle check --verbose --file=Brewfile で足りないものを見る）"
+    fail "brew bundle check が通らない（brew bundle check --no-upgrade --verbose --file=Brewfile で足りないものを見る）"
+fi
+# サードパーティ tap の formula・cask は、完全名＋trusted: true で書く（brew bundle がそれを信頼してから入れる）
+untrusted=$(awk '
+    /^tap "/ { split($0, q, "\""); t = tolower(q[2]); if (t !~ /^homebrew\//) taps[t] = 1 }
+    /^(brew|cask) "[^"\/]+\/[^"\/]+\/[^"]+"/ {
+        split($0, q, "\""); split(q[2], p, "/"); t = tolower(p[1] "/" p[2])
+        if ($0 ~ /trusted: true/) ok[t] = 1; else bad = bad " " q[2]
+    }
+    END {
+        for (t in taps) if (!(t in ok)) bad = bad " " t "（完全名＋trusted: true の行が無い）"
+        print bad
+    }' "$REPO_DIR/Brewfile")
+if [ -z "${untrusted# }" ]; then
+    pass "サードパーティ tap の formula・cask は完全名＋trusted: true"
+else
+    fail "trusted: true が無い:${untrusted}"
 fi
 
 section "シェルの起動時間（zsh -i -c exit を 5 回）"

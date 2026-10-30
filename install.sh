@@ -141,11 +141,12 @@ setup_brew_bundle() {
     source "$DOTFILES_DIR/lib/manual-casks.sh"
     HOMEBREW_BUNDLE_CASK_SKIP="$(manual_casks "$DOTFILES_DIR/Brewfile" || true)"
     export HOMEBREW_BUNDLE_CASK_SKIP
-    if HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --file="$DOTFILES_DIR/Brewfile" >/dev/null 2>&1; then
+    # 更新待ちは「足りない」と数えない（--no-upgrade）
+    if HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --no-upgrade --file="$DOTFILES_DIR/Brewfile" >/dev/null 2>&1; then
         return
     fi
     if [ "$DRY_RUN" = true ]; then
-        HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --verbose --file="$DOTFILES_DIR/Brewfile" 2>&1 | sed 's/^/    /' || true
+        HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --no-upgrade --verbose --file="$DOTFILES_DIR/Brewfile" 2>&1 | sed 's/^/    /' || true
     fi
     change CREATED "brew bundle --file=Brewfile（足りないものを入れる。App Store は先にサインインしておく）" \
         brew bundle --file="$DOTFILES_DIR/Brewfile"
