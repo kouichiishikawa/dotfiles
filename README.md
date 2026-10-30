@@ -84,7 +84,7 @@ git の外にあるデータと、Brewfile に無いアプリの一覧は [docs/
 ./rollback.sh               # 退避先を選んで、install.sh が作ったリンクを外し、退避したものを戻す
 ./rollback.sh ~/.dotfiles_backup/20261029_120000   # 退避先を指定して戻す
 ./macos/defaults.sh         # macOS の設定だけ入れる
-brew bundle check --verbose --file=Brewfile         # Brewfile にあって入っていないものを見る
+brew bundle check --no-upgrade --verbose --file=Brewfile   # Brewfile にあって入っていないものを見る（更新待ちは数えない）
 ```
 
 - `rollback.sh` が戻すのは、`install.sh` が `<退避先>/links.txt` に記録したリンクと、そのときに退避したものだけ

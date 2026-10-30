@@ -158,7 +158,7 @@ cask "spline"
 cask "visual-studio-code"
 # Video communication and virtual meeting platform
 cask "zoom"
-# X API の CLI（tap の信頼は完全名の行にだけ効く）
+# X API の CLI（サードパーティ tap のものは完全名＋trusted: true で書く。brew bundle が入れる前に信頼する。test.sh が確かめる）
 cask "xdevplatform/tap/xurl", trusted: true
 mas "1Password for Safari", id: 1569813296
 mas "DaVinci Resolve", id: 571213070
