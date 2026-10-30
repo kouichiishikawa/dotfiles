@@ -104,10 +104,10 @@ App Store のアプリ（`mas list` の 10 個）は全部 Brewfile にある。
 | 自分で作ったパッチ・音色 | `~/Music/Audio Music Apps` | 235M | 5 の rsync で移す |
 | ミュージックのライブラリ | `~/Music/Music` | 1.0G | 5 の rsync で移す（iCloud ミュージックライブラリが有効なら同期で戻る） |
 | 写真ライブラリ | `~/Pictures/Photos Library.photoslibrary` | 1.3G | iCloud 写真が有効なら同期で戻る。無効なら 5 の rsync で移す |
-| Lightroom Classic のカタログ | `~/Pictures/Lightroom` | 31M | 5 の rsync で移す。写真の元ファイルの場所はカタログの「フォルダ」パネルで確かめる（要確認） |
+| Lightroom Classic のカタログ | `~/Pictures/Lightroom` | 31M | 5 の rsync で移す。**写真の元ファイルは移すものが無い**（2026-10-30 にカタログを読み取り専用で読んだ。登録された写真は 2 枚だけで、どちらも元ファイルがもう無い） |
 | iMovie のライブラリ | `~/Movies/iMovieライブラリ.imovielibrary` | 2.0G | 5 の rsync で移す |
 | CapCut・DaVinci Resolve の作業データ | `~/Movies/CapCut`・`~/Movies/DaVinci Resolve` | 337M・29M | 5 の rsync で移す |
-| Eagle のライブラリ | 要確認（Eagle の「ライブラリ」→「場所を表示」） | — | 場所が分かったら 5 に足す |
+| Eagle のライブラリ | 無い | — | **移さない。** 古い Mac では一度も起動しておらず、設定（`~/Library/Application Support/Eagle`）もライブラリ（`*.library`）も無い（2026-10-30 に確認）。新しい Mac で使うときに作る |
 
 ## 5. 外付け SSD にコピーするもの
 
@@ -206,6 +206,11 @@ find ~/Documents/01_projects -name node_modules -prune -o -name .git -prune -o -
 du -sh ~/Music/* ~/Pictures/* ~/Movies/* ~/Documents/* ~/Desktop ~/Library/Fonts
 du -sh "/Library/Application Support/Logic" "/Library/Application Support/Native Instruments" /Users/Shared "/Library/Audio/Apple Loops" "/Library/Audio/Plug-Ins"
 find ~/Music/MainStage -name '*.concert'
+# Lightroom の元写真のフォルダ（Lightroom を閉じて、カタログのコピーを読む）
+cp ~/Pictures/Lightroom/*-v13.lrcat /tmp/lr.lrcat
+sqlite3 'file:/tmp/lr.lrcat?mode=ro&immutable=1' 'select absolutePath from AgLibraryRootFolder; select count(*) from Adobe_images;'
+# Eagle のライブラリ（設定が無ければ使っていない）
+ls ~/Library/Application\ Support/Eagle
 
 # iCloud に同期されているか（0 なら同期されていない）
 defaults read com.apple.finder FXICloudDriveDesktop
