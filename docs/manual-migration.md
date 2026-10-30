@@ -34,10 +34,11 @@
 | Discord / zoom | `discord` / `zoom` | 要 |
 | Dropbox / Google Drive | `dropbox` / `google-drive` | 要（Google Drive は 2 アカウント） |
 | GitHub Desktop / GitButler | `github` / `gitbutler` | 要 |
-| Eagle | `ogdesign-eagle` | ライセンス要。ライブラリの場所は 4 を見る |
+| Eagle | `ogdesign-eagle` | ライセンス要。移すライブラリは無い（4 を見る） |
 | Screen Studio | `screen-studio` | ライセンス要 |
 | Blender / AppCleaner / SF Symbols | `blender` / `appcleaner` / `sf-symbols` | 不要 |
 | Google 日本語入力 | `google-japanese-ime` | 不要。ユーザー辞書は書き出しが要る（6 を見る） |
+| Grok Bot | `grok-bot` | 要（DEV-209 で足した。手元のアプリと同じもの: アプリ名 `Grok Bot.app`、bundle ID `com.anysphere.sand` が cask の zap と一致） |
 | Logi Options+ | `logi-options+` | 要（設定はアカウントのバックアップで戻る） |
 | Elgato Stream Deck | `elgato-stream-deck` | 不要。プロファイルは書き出しが要る（6 を見る） |
 | Philips Hue Sync | `philips-hue-sync` | 要（ブリッジとの再ペアリング） |
@@ -56,7 +57,6 @@
 | EVO（Audient） | Audient の公式サイト | オーディオインターフェースの制御 |
 | FileZilla | 公式サイト | cask は廃止されている |
 | VoiceOS | 公式サイト | 要サインイン |
-| Grok Bot | 要確認 | cask `grok-bot` はあるが、手元のアプリの bundle ID が `com.anysphere.sand` で、同じものか確かめていない |
 | Photoshop・Illustrator・Lightroom Classic・Acrobat | Adobe Creative Cloud | 要サインイン |
 | Native Instruments の音源・プラグイン | Native Access | 要サインイン。4 を見る |
 | Google ドキュメント・スプレッドシート・スライド | Google Drive に付いてくる | 単体で入れる必要はない |

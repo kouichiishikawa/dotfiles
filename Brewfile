@@ -124,6 +124,8 @@ cask "google-chrome"
 cask "google-drive"
 # Japanese input software
 cask "google-japanese-ime"
+# AI teammates that work across your apps and tools
+cask "grok-bot"
 # Controller for Insta360 webcams
 cask "insta360-link-controller"
 # Agent-centric IDE with spec-driven development
