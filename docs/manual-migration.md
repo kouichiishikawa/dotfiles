@@ -5,7 +5,7 @@
 
 - 2026-10-29 に古い Mac で測った結果。移行の直前に、末尾の「測り直す」のコマンドでもう一度測る
 - 公開リポジトリなので、秘密の値・メールアドレス・社名・個人名・金額は書かない。秘密は場所と 1Password の有無だけを書く
-- 「1Password」の列で「要確認」と書いた行は、移行の前に 1Password に入っていることを確かめ、入っていなければ入れてから ✅ にする
+- 「1Password」の列は 2026-10-30 に確かめた結果。ファイルからは変数・キーの名前だけを取り出し、`op item list` のタイトルと突き合わせた（値は読んでいない）。✅ は 1Password にある、「入れない」は入れないと決めたもの
 
 ## 0. 当日の順番
 
@@ -78,17 +78,17 @@ App Store のアプリ（`mas list` の 10 個）は全部 Brewfile にある。
 
 | 何 | 場所 | 1Password | 移し方 |
 |---|---|---|---|
-| シェルの秘密の環境変数 | `~/.secrets.zsh` | 要確認 | 1Password から書き戻す |
-| Claude Code の MCP 設定とトークン | `~/.claude.json` | 要確認 | MCP は入れ直して認証し直す。トークンは 1Password から |
-| Git の名前・メールアドレス・署名の鍵 | `~/.gitconfig.local` | 要確認 | README の `git config --file ~/.gitconfig.local` で作り直す |
+| シェルの秘密の環境変数 | `~/.secrets.zsh`（GitHub の PAT と Supabase のアクセストークンの 2 つ） | ✅ | 1Password から書き戻す |
+| Claude Code の MCP 設定とトークン | `~/.claude.json`（トークンを持つのは GitHub MCP の Authorization ヘッダーだけ。ほかの MCP は OAuth） | ✅ | MCP は入れ直して認証し直す。GitHub の PAT は 1Password から |
+| Git の名前・メールアドレス・署名の鍵 | `~/.gitconfig.local`（秘密は署名の鍵だけ） | ✅ | README の `git config --file ~/.gitconfig.local` で作り直す。署名の鍵は 1Password の SSH 鍵 |
 | Codex の認証と設定 | `~/.codex/auth.json`・`~/.codex/config.toml` | — | `codex login` でサインインし直す。config は Agent 基盤の移行で扱う |
 | GitHub CLI | `~/.config/gh/hosts.yml` | — | `gh auth login` で作り直す |
 | Google Cloud CLI | `~/.config/gcloud/` | — | `gcloud auth login` で作り直す |
 | AWS の SSO | `~/.aws/sso/` | — | `aws sso login` で作り直す |
 | Docker | `~/.docker/config.json` | — | Docker Desktop でサインインし直す |
-| iOS アプリの秘密の設定 | 個人のリポジトリ 1 つの `Configs/Secrets.xcconfig` | 要確認 | 5 の rsync で移す |
-| 各リポジトリの `.env*`（example などの見本を除く） | `~/Documents/01_projects` の下に 5 件 | 要確認 | 5 の rsync で移す |
-| Cloudflare Workers の `.dev.vars` | `~/Documents/01_projects` の下に 1 件 | 要確認 | 5 の rsync で移す |
+| iOS アプリの秘密の設定 | 個人のリポジトリ 1 つの `Configs/Secrets.xcconfig`（API キー 1 つ） | 入れるものが無い（2026-10-30 に見たとき、キーの値が空だった） | 5 の rsync で移す。キーを設定したら 1Password にも入れる |
+| 各リポジトリの `.env*`（example などの見本を除く） | `~/Documents/01_projects` の下に 5 件 | 3 件は ✅。2 件（Supabase のキーと cron の秘密）は入れない（2026-10-30 決定） | 5 の rsync で移す。入れない 2 件は Supabase の管理画面が正本 |
+| Cloudflare Workers の `.dev.vars` | `~/Documents/01_projects` の下に 1 件 | 入れない（2026-10-30 決定） | 5 の rsync で移す。Webhook の秘密とメール送信の API キーは各サービスの管理画面が正本 |
 | 古い SSH の鍵 | `~/.ssh/id_ed25519`（2025-10 作成） | — | **移さない**（2026-10-29 決定）。SSH と署名は 1Password のエージェントを使う。8 を見る |
 
 `~/.ssh/config` は dotfiles のリンクなので、手で移さなくてよい。`known_hosts` は接続し直せば作られる。
@@ -201,6 +201,10 @@ ls -la ~/.secrets.zsh ~/.claude.json ~/.gitconfig.local ~/.ssh ~/.codex/auth.jso
 find ~/Documents/01_projects -name node_modules -prune -o -name .git -prune -o -type f \
   \( -name '.env*' -o -name '.dev.vars*' -o -name 'Secrets*.xcconfig' -o -name '*.pem' -o -name '*.p12' -o -name '*.p8' \) -print \
   | awk -F/ '{print $NF}' | sort | uniq -c
+# 秘密の名前だけ（値は出さない）と、1Password の項目のタイトル
+grep -oE '^(export +)?[A-Za-z_][A-Za-z0-9_]*=' ~/.secrets.zsh
+jq -r '.mcpServers | to_entries[] | "\(.key) env=\((.value.env // {}) | keys) headers=\((.value.headers // {}) | keys)"' ~/.claude.json
+op item list --format json | jq -r '.[] | "\(.category)\t\(.title)"'
 
 # 大きいデータ
 du -sh ~/Music/* ~/Pictures/* ~/Movies/* ~/Documents/* ~/Desktop ~/Library/Fonts
