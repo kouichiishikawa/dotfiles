@@ -102,7 +102,7 @@ brew bundle check --no-upgrade --verbose --file=Brewfile   # Brewfile にあっ�
 │   ├── ghostty/config        # ターミナル（Ghostty）
 │   ├── git/ignore            # git の全体の ignore
 │   ├── mise/config.toml      # mise で入れるツール（Node の LTS）
-│   └── cmux/cmux.json        # cmux の表示とショートカット
+│   └── cmux/cmux.json        # cmux の設定（cmux が設定画面の変更をこのファイルに書き込む）
 ├── Brewfile                  # Homebrew の formula・cask と App Store のアプリ
 ├── macos/defaults.sh         # macOS の設定（defaults write）
 ├── editors/                  # VS Code（EDITOR は code）と Cursor の設定・キー割り当て・拡張機能の一覧

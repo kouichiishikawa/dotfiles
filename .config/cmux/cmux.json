@@ -7,28 +7,5 @@
   },
   "browser": {
     "theme": "dark"
-  },
-  "shortcuts": {
-    "bindings": {
-      "nextSidebarTab": {
-        "first": {
-          "command": false,
-          "control": false,
-          "key": "",
-          "option": false,
-          "shift": false
-        }
-      },
-      "nextSurface": {
-        "first": {
-          "command": false,
-          "control": true,
-          "key": "\t",
-          "keyCode": 48,
-          "option": false,
-          "shift": false
-        }
-      }
-    }
   }
 }
