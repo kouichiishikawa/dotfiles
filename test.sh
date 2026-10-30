@@ -3,14 +3,16 @@
 # この Mac が dotfiles の状態になっているかを確かめる。1 つでも失敗すれば終了コード 1
 #
 # 使い方: ./test.sh
-#         DOTFILES_DIR=~/dotfiles ./test.sh   リンク先の dotfiles を指定する（既定はこのスクリプトの場所）
+#         DOTFILES_DIR=~/dotfiles ./test.sh   リンク先の dotfiles を指定する（既定はこのスクリプトの場所。Brewfile は常にこのスクリプトの場所のもの）
 
 set -u
 
-DOTFILES_DIR="${DOTFILES_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+# Brewfile と lib はこのスクリプトのあるリポジトリのものを使う（DOTFILES_DIR はリンク先を見るためだけ）
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOTFILES_DIR="${DOTFILES_DIR:-$REPO_DIR}"
 DOTFILES_DIR=${DOTFILES_DIR%/}
 # install.sh の LINK_FILES と揃える
-LINK_FILES=(.zshrc .zprofile .gitconfig .config/starship.toml .config/ghostty/config .config/git/ignore .config/mise/config.toml)
+LINK_FILES=(.zshrc .zprofile .gitconfig .config/starship.toml .config/ghostty/config .config/git/ignore .config/mise/config.toml .config/cmux/cmux.json)
 PYTHON_VERSION=3.12
 # シェルの起動時間の中央値の上限（秒）
 STARTUP_LIMIT=0.3
@@ -76,8 +78,11 @@ if [ -x "$OP_SSH_SIGN" ]; then
 else
     fail "1Password の op-ssh-sign が無い（1Password のデスクトップアプリを入れる）"
 fi
-if HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --file="$DOTFILES_DIR/Brewfile" >/dev/null 2>&1; then
-    pass "brew bundle check（Brewfile のものがすべて入っている）"
+# shellcheck source=lib/manual-casks.sh
+source "$REPO_DIR/lib/manual-casks.sh"
+skip=$(manual_casks "$REPO_DIR/Brewfile" || true)
+if HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_BUNDLE_CASK_SKIP="$skip" brew bundle check --file="$REPO_DIR/Brewfile" >/dev/null 2>&1; then
+    pass "brew bundle check（Brewfile のものがすべて入っている。brew の外で入っている cask: $(echo "$skip" | wc -w | tr -d ' ') 個）"
 else
     fail "brew bundle check が通らない（brew bundle check --verbose --file=Brewfile で足りないものを見る）"
 fi

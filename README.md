@@ -37,8 +37,8 @@ cd ~/dotfiles
 | 1 | Xcode Command Line Tools | 何もしない（無ければ入れて止まるので、終わったらもう一度実行する） |
 | 2 | Homebrew | 何もしない |
 | 3 | 1Password のデスクトップアプリ | 何もしない |
-| 4 | `brew bundle --file=Brewfile` | `brew bundle check` が通れば何もしない |
-| 5 | リンク: `.zshrc` `.zprofile` `.gitconfig`、`.config/` の `starship.toml` `ghostty/config` `git/ignore` `mise/config.toml`（`LINK_FILES`）、`.ssh/config`、VS Code と Cursor の `settings.json` `keybindings.json`（アプリがあるときだけ） | 正しいリンクなら何もしない。別のファイルがあれば `~/.dotfiles_backup/<日時>/` に退避してからリンクする |
+| 4 | `brew bundle --file=Brewfile` | `brew bundle check` が通れば何もしない。brew の外で入れたアプリ（`.app` や pkg のレシートがあるもの）は入れ直さない（`lib/manual-casks.sh`） |
+| 5 | リンク: `.zshrc` `.zprofile` `.gitconfig`、`.config/` の `starship.toml` `ghostty/config` `git/ignore` `mise/config.toml` `cmux/cmux.json`（`LINK_FILES`）、`.ssh/config`、VS Code と Cursor の `settings.json` `keybindings.json`（アプリがあるときだけ） | 正しいリンクなら何もしない。別のファイルがあれば `~/.dotfiles_backup/<日時>/` に退避してからリンクする |
 | 6 | VS Code と Cursor の拡張機能（`editors/extensions/*.txt`） | 入っているものは入れない |
 | 7 | `mise install`（Node の LTS）と `uv python install 3.12 --default`（`~/.local/bin/python3`） | 入っていれば何もしない |
 | 8 | dotfiles の `core.hooksPath=.githooks`（コミット前に gitleaks で秘密情報を検査） | 何もしない |
@@ -63,11 +63,12 @@ SSH が通ってから clone する（どちらも非公開）。
 git clone git@github.com:kouichiishikawa/agents.git ~/.agents
 git clone git@github.com:kouichiishikawa/brain.git ~/brain
 ```
-- 自分で作った launchd（`~/Library/LaunchAgents/com.kouichiishikawa.*`）・Claude Code のフック・スキルは dotfiles に入れない。`~/.agents` の README の手順で入れ直す
+- 自分で作った launchd（`~/Library/LaunchAgents/com.kouichiishikawa.*`）は dotfiles に入れない。plist の元がある `~/.agents`（`skills/*/launchd/`）と各リポジトリの `launchd/` から入れ直す。sprint-followup は `~/.agents/skills/sprint/references/watchdog.md` の「followup の入れ方」を見る
+- Claude Code のフック・スキルも dotfiles に入れない。`~/.agents` の README の手順で入れ直す
 - MCP サーバーのトークンは 1Password から入れ直す。値はこのリポジトリにも会話にも書き写さない
 
 ### 6. 手で入れ直すもの
-git の外にあるデータと、Brewfile に無いアプリの一覧は [docs/manual-migration.md](docs/manual-migration.md)（DEV-201 で作成予定）。
+git の外にあるデータと、Brewfile に無いアプリの一覧は [docs/manual-migration.md](docs/manual-migration.md)。
 
 ### 7. 確かめる
 ```bash
@@ -100,13 +101,15 @@ brew bundle check --verbose --file=Brewfile         # Brewfile にあって入�
 │   ├── starship.toml         # プロンプト
 │   ├── ghostty/config        # ターミナル（Ghostty）
 │   ├── git/ignore            # git の全体の ignore
-│   └── mise/config.toml      # mise で入れるツール（Node の LTS）
+│   ├── mise/config.toml      # mise で入れるツール（Node の LTS）
+│   └── cmux/cmux.json        # cmux の表示とショートカット
 ├── Brewfile                  # Homebrew の formula・cask と App Store のアプリ
 ├── macos/defaults.sh         # macOS の設定（defaults write）
 ├── editors/                  # VS Code（EDITOR は code）と Cursor の設定・キー割り当て・拡張機能の一覧
 ├── .githooks/pre-commit      # gitleaks による秘密情報の検査
 ├── archive/                  # 使わなくなった古いファイルの退避先
 ├── install.sh                # 新しい Mac を dotfiles の状態にする
+├── lib/manual-casks.sh       # brew の外で入れたアプリを brew bundle の対象から外す（install.sh・test.sh が使う）
 ├── rollback.sh               # install.sh のリンクと退避を戻す
 └── test.sh                   # この Mac が dotfiles の状態かを確かめる
 ```

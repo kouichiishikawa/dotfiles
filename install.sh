@@ -10,7 +10,7 @@ set -Eeu
 # スクリプトの場所を基準にする（どのフォルダから実行しても同じ結果にする）
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # ホームにリンクするファイル（ここに書いたものだけをリンクする。rollback.sh・test.sh と揃える）
-LINK_FILES=(.zshrc .zprofile .gitconfig .config/starship.toml .config/ghostty/config .config/git/ignore .config/mise/config.toml)
+LINK_FILES=(.zshrc .zprofile .gitconfig .config/starship.toml .config/ghostty/config .config/git/ignore .config/mise/config.toml .config/cmux/cmux.json)
 PYTHON_VERSION=3.12
 OP_AGENT_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
@@ -136,6 +136,11 @@ setup_brew_bundle() {
         plan "brew bundle --file=Brewfile（Homebrew を入れたあと）"
         return
     fi
+    # brew の外で入れたアプリは入れ直さない（既にあるアプリとぶつかって止まるため）
+    # shellcheck source=lib/manual-casks.sh
+    source "$DOTFILES_DIR/lib/manual-casks.sh"
+    HOMEBREW_BUNDLE_CASK_SKIP="$(manual_casks "$DOTFILES_DIR/Brewfile" || true)"
+    export HOMEBREW_BUNDLE_CASK_SKIP
     if HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --file="$DOTFILES_DIR/Brewfile" >/dev/null 2>&1; then
         return
     fi
