@@ -74,7 +74,7 @@ git の外にあるデータと、Brewfile に無いアプリの一覧は [docs/
 ```bash
 ./test.sh
 ```
-新しいシェルを開いてから実行する（`exec zsh -l`）。リンク・主要なツール（brew・mise・node・uv・python3・starship・gitleaks・delta・1Password の op-ssh-sign）・`brew bundle check`・シェルの起動時間（5 回の中央値が 0.3 秒以下）・`ssh -T git@github.com`・git の署名の設定・`core.hooksPath` を見て、1 つでも失敗すれば終了コード 1 になる。
+新しいシェルを開いてから実行する（`exec zsh -l`）。リンク・主要なツール（brew・mise・node・uv・python3・starship・gitleaks・delta・1Password の op-ssh-sign）・`brew bundle check`・シェルの起動時間（5 回の最速値が 0.3 秒以下。中央値とロードアベレージも表示する）・`ssh -T git@github.com`・git の署名の設定・`core.hooksPath` を見て、1 つでも失敗すれば終了コード 1 になる。
 
 ## ふだんの使い方
 
@@ -102,7 +102,7 @@ brew bundle check --no-upgrade --verbose --file=Brewfile   # Brewfile にあっ�
 │   ├── ghostty/config        # ターミナル（Ghostty）
 │   ├── git/ignore            # git の全体の ignore
 │   ├── mise/config.toml      # mise で入れるツール（Node の LTS）
-│   └── cmux/cmux.json        # cmux の表示とショートカット
+│   └── cmux/cmux.json        # cmux の設定（cmux が設定画面の変更をこのファイルに書き込む）
 ├── Brewfile                  # Homebrew の formula・cask と App Store のアプリ
 ├── macos/defaults.sh         # macOS の設定（defaults write）
 ├── editors/                  # VS Code（EDITOR は code）と Cursor の設定・キー割り当て・拡張機能の一覧

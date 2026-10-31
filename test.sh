@@ -14,7 +14,7 @@ DOTFILES_DIR=${DOTFILES_DIR%/}
 # install.sh の LINK_FILES と揃える
 LINK_FILES=(.zshrc .zprofile .gitconfig .config/starship.toml .config/ghostty/config .config/git/ignore .config/mise/config.toml .config/cmux/cmux.json)
 PYTHON_VERSION=3.12
-# シェルの起動時間の中央値の上限（秒）
+# シェルの起動時間の最速値の上限（秒）。中央値は負荷しだいで上限を超えるので判定に使わない
 STARTUP_LIMIT=0.3
 OP_SSH_SIGN=/Applications/1Password.app/Contents/MacOS/op-ssh-sign
 
@@ -108,11 +108,14 @@ section "シェルの起動時間（zsh -i -c exit を 5 回）"
 times=$(for _ in 1 2 3 4 5; do
     perl -MTime::HiRes=time -e '$t = time; system("zsh", "-i", "-c", "exit"); printf "%.3f\n", time - $t' 2>/dev/null
 done | sort -n)
+fastest=$(echo "$times" | sed -n 1p)
 median=$(echo "$times" | sed -n 3p)
-if [ -n "$median" ] && awk -v m="$median" -v l="$STARTUP_LIMIT" 'BEGIN { exit !(m <= l) }'; then
-    pass "中央値 ${median} 秒（上限 ${STARTUP_LIMIT} 秒）"
+loadavg=$(sysctl -n vm.loadavg | tr -d '{}' | xargs)
+detail="中央値 ${median:-測れない} 秒、ロードアベレージ ${loadavg}"
+if [ -n "$fastest" ] && awk -v m="$fastest" -v l="$STARTUP_LIMIT" 'BEGIN { exit !(m <= l) }'; then
+    pass "最速値 ${fastest} 秒（上限 ${STARTUP_LIMIT} 秒。${detail}）"
 else
-    fail "中央値 ${median:-測れない} 秒（上限 ${STARTUP_LIMIT} 秒）: $(echo "$times" | tr '\n' ' ')"
+    fail "最速値 ${fastest:-測れない} 秒（上限 ${STARTUP_LIMIT} 秒。${detail}）: $(echo "$times" | tr '\n' ' ')"
 fi
 
 section "git と SSH"

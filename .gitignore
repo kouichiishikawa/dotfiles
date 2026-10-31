@@ -60,3 +60,7 @@ __pycache__/
 *.gem
 .bundle/
 vendor/bundle
+
+### cmux ###
+# cmux が cmux.json を書くときにリンク先の隣に作るロック用ファイル
+.config/cmux/cmux.json.cmux-write.lock
