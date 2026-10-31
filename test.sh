@@ -103,6 +103,11 @@ if [ -z "${untrusted# }" ]; then
 else
     fail "trusted: true が無い:${untrusted}"
 fi
+if apps=$("$REPO_DIR/macos/default-apps.sh" --check 2>&1); then
+    pass "macos/default-apps.txt の拡張子はすべて VS Code で開く"
+else
+    fail "VS Code で開かない拡張子がある（./macos/default-apps.sh で直す）: $(echo "$apps" | grep -v '^VS Code' | tr '\n' ' ')"
+fi
 
 section "シェルの起動時間（zsh -i -c exit を 5 回）"
 times=$(for _ in 1 2 3 4 5; do

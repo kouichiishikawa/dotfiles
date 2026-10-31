@@ -236,6 +236,22 @@ setup_git_hooks() {
     fi
 }
 
+# 開発用のファイルを VS Code で開く。変えられなかった拡張子があってもほかの手順は止めない
+setup_default_apps() {
+    log "ファイルを開くアプリ（macos/default-apps.sh）"
+    if "$DOTFILES_DIR/macos/default-apps.sh" --check >/dev/null 2>&1; then
+        return
+    fi
+    plan "macos/default-apps.txt の拡張子を VS Code で開くようにする"
+    if [ "$DRY_RUN" = true ]; then
+        CREATED=$((CREATED + 1))
+    elif "$DOTFILES_DIR/macos/default-apps.sh"; then
+        CREATED=$((CREATED + 1))
+    else
+        todo "VS Code で開くようにできなかった拡張子がある（./macos/default-apps.sh --check で見る）"
+    fi
+}
+
 # 確認してから入れる（入れると Dock・Finder が再起動する）。--dry-run・確認できないときは入れない
 setup_macos_defaults() {
     log "macOS の設定（macos/defaults.sh）"
@@ -282,6 +298,7 @@ main() {
         setup_editor_extensions
         setup_runtimes
         setup_git_hooks
+        setup_default_apps
         setup_macos_defaults
     fi
     collect_todo

@@ -1,0 +1,41 @@
+# VS Code（com.microsoft.VSCode）で開く拡張子。1 行に 1 つ、先頭の . は付けない
+# 反映: ./macos/default-apps.sh ／ 確かめる: ./macos/default-apps.sh --check
+# html（ブラウザ）・sh（Ghostty）・swift・plist（Xcode）・log（Console）は入れない（2026-10-31 ユーザー決定）
+# ts は macOS では動画（MPEG-2 TS）扱いだが、VS Code で開く（同上）
+
+# 2026-10-31 に Cursor で開いていたもの
+md
+markdown
+json
+ts
+tsx
+js
+jsx
+mjs
+cjs
+py
+txt
+css
+scss
+csv
+ini
+go
+rs
+sql
+vue
+gitignore
+editorconfig
+lock
+
+# Xcode・Kontakt で開いていたもの、開くアプリが無かったもの
+zsh
+bash
+yml
+yaml
+toml
+xml
+jsonc
+env
+conf
+svelte
+astro

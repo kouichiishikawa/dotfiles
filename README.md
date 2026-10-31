@@ -42,8 +42,9 @@ cd ~/dotfiles
 | 6 | VS Code と Cursor の拡張機能（`editors/extensions/*.txt`） | 入っているものは入れない |
 | 7 | `mise install`（Node の LTS）と `uv python install 3.12 --default`（`~/.local/bin/python3`） | 入っていれば何もしない |
 | 8 | dotfiles の `core.hooksPath=.githooks`（コミット前に gitleaks で秘密情報を検査） | 何もしない |
-| 9 | macOS の設定（`macos/defaults.sh`。Dock・Finder・キーボード・トラックパッド） | 毎回、入れるかを聞く（Enter で入れない） |
-| 10 | 「人がやること」の一覧を出す | — |
+| 9 | 開発用のファイル（`macos/default-apps.txt` の拡張子）を Finder から VS Code で開く（`macos/default-apps.sh`。duti を使う） | すべて VS Code なら何もしない。変えられなかったものは「人がやること」に出す |
+| 10 | macOS の設定（`macos/defaults.sh`。Dock・Finder・キーボード・トラックパッド） | 毎回、入れるかを聞く（Enter で入れない） |
+| 11 | 「人がやること」の一覧を出す | — |
 
 最後に「作る・入れる / リンク / 退避」の件数を出す。2 回目以降は、変わったものが無ければすべて 0 になる。
 
@@ -105,6 +106,7 @@ brew bundle check --no-upgrade --verbose --file=Brewfile   # Brewfile にあっ�
 │   └── cmux/cmux.json        # cmux の設定（cmux が設定画面の変更をこのファイルに書き込む）
 ├── Brewfile                  # Homebrew の formula・cask と App Store のアプリ
 ├── macos/defaults.sh         # macOS の設定（defaults write）
+├── macos/default-apps.*      # Finder で VS Code で開く拡張子の一覧（.txt）と、それを duti で反映するスクリプト（.sh）
 ├── editors/                  # VS Code（EDITOR は code）と Cursor の設定・キー割り当て・拡張機能の一覧
 ├── .githooks/pre-commit      # gitleaks による秘密情報の検査
 ├── archive/                  # 使わなくなった古いファイルの退避先
