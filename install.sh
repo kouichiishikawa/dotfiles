@@ -9,8 +9,9 @@ set -Eeu
 
 # スクリプトの場所を基準にする（どのフォルダから実行しても同じ結果にする）
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# ホームにリンクするファイル（ここに書いたものだけをリンクする。rollback.sh・test.sh と揃える）
-LINK_FILES=(.zshrc .zprofile .gitconfig .config/starship.toml .config/ghostty/config .config/git/ignore .config/mise/config.toml .config/cmux/cmux.json)
+# ホームにリンクするファイル（LINK_FILES。test.sh と同じ定義を読む）
+# shellcheck source=lib/link-files.sh
+source "$DOTFILES_DIR/lib/link-files.sh"
 PYTHON_VERSION=3.12
 OP_AGENT_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
@@ -90,198 +91,13 @@ link() {
     change LINKED "リンク: ~/$rel → $src" make_link "$src" "$rel"
 }
 
-setup_xcode_clt() {
-    log "Xcode Command Line Tools"
-    if xcode-select -p >/dev/null 2>&1; then
-        return
-    fi
-    change CREATED "Xcode Command Line Tools を入れる（画面の案内に従い、終わったらもう一度 ./install.sh）" xcode-select --install
-    if [ "$DRY_RUN" = false ]; then
-        exit 0
-    fi
-}
-
-install_homebrew() {
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-}
-
-setup_homebrew() {
-    log "Homebrew"
-    if ! has brew && [ -x /opt/homebrew/bin/brew ]; then
-        eval "$(/opt/homebrew/bin/brew shellenv)"
-    fi
-    if has brew; then
-        return
-    fi
-    change CREATED "Homebrew を入れる" install_homebrew
-    if [ "$DRY_RUN" = false ]; then
-        eval "$(/opt/homebrew/bin/brew shellenv)"
-    fi
-}
-
-# SSH の鍵とコミットの署名に要るので、brew bundle より先に入れる（Brewfile には入れていない）
-setup_1password() {
-    log "1Password"
-    if [ ! -d /Applications/1Password.app ]; then
-        change CREATED "1Password のデスクトップアプリを入れる" brew install --cask 1password
-    fi
-    if [ ! -S "$OP_AGENT_SOCK" ]; then
-        todo "1Password にサインインし、設定 > 開発者 で「SSH エージェントを使用」を有効にする"
-    fi
-}
-
-setup_brew_bundle() {
-    log "brew bundle（Brewfile）"
-    if ! has brew; then
-        plan "brew bundle --file=Brewfile（Homebrew を入れたあと）"
-        return
-    fi
-    # brew の外で入れたアプリは入れ直さない（既にあるアプリとぶつかって止まるため）
-    # shellcheck source=lib/manual-casks.sh
-    source "$DOTFILES_DIR/lib/manual-casks.sh"
-    HOMEBREW_BUNDLE_CASK_SKIP="$(manual_casks "$DOTFILES_DIR/Brewfile" || true)"
-    export HOMEBREW_BUNDLE_CASK_SKIP
-    # 更新待ちは「足りない」と数えない（--no-upgrade）
-    if HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --no-upgrade --file="$DOTFILES_DIR/Brewfile" >/dev/null 2>&1; then
-        return
-    fi
-    if [ "$DRY_RUN" = true ]; then
-        HOMEBREW_NO_AUTO_UPDATE=1 brew bundle check --no-upgrade --verbose --file="$DOTFILES_DIR/Brewfile" 2>&1 | sed 's/^/    /' || true
-    fi
-    change CREATED "brew bundle --file=Brewfile（足りないものを入れる。App Store は先にサインインしておく）" \
-        brew bundle --file="$DOTFILES_DIR/Brewfile"
-}
-
-setup_links() {
-    log "リンク"
-    local dotfile
-    for dotfile in "${LINK_FILES[@]}"; do
-        link "$DOTFILES_DIR/$dotfile" "$dotfile"
-    done
-
-    # SSH（鍵は 1Password の SSH エージェントから使う）
-    if [ ! -d "$HOME/.ssh" ]; then
-        change CREATED "作る: ~/.ssh（700）" mkdir -m 700 "$HOME/.ssh"
-    elif [ "$(stat -f %OLp "$HOME/.ssh")" != 700 ]; then
-        change CREATED "権限: ~/.ssh を 700 にする" chmod 700 "$HOME/.ssh"
-    fi
-    link "$DOTFILES_DIR/.ssh/config" .ssh/config
-
-    # エディタ（入っているものだけ）
-    local app dir name key
-    for app in "Visual Studio Code:Code:vscode" "Cursor:Cursor:cursor"; do
-        IFS=: read -r name dir key <<< "$app"
-        [ -d "/Applications/$name.app" ] || continue
-        link "$DOTFILES_DIR/editors/settings/$key.json" "Library/Application Support/$dir/User/settings.json"
-        link "$DOTFILES_DIR/editors/keybindings/$key.json" "Library/Application Support/$dir/User/keybindings.json"
-    done
-}
-
-# editors/extensions/<key>.txt のうち、まだ入っていない拡張機能だけを入れる
-setup_editor_extensions() {
-    log "エディタの拡張機能"
-    local pair cli key installed ext
-    for pair in "code:vscode" "cursor:cursor"; do
-        IFS=: read -r cli key <<< "$pair"
-        if ! has "$cli"; then
-            continue
-        fi
-        installed=$("$cli" --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')
-        while IFS= read -r ext || [ -n "$ext" ]; do
-            [ -n "$ext" ] || continue
-            if grep -qxF "$(echo "$ext" | tr '[:upper:]' '[:lower:]')" <<< "$installed"; then
-                continue
-            fi
-            plan "$cli に入れる: $ext"
-            if [ "$DRY_RUN" = true ]; then
-                CREATED=$((CREATED + 1))
-            elif "$cli" --install-extension "$ext" --force >/dev/null 2>&1; then
-                CREATED=$((CREATED + 1))
-            else
-                # Marketplace から消えたものがあっても、ほかの手順は止めない（数には入れない）
-                warn "入れられませんでした: ${ext}（editors/extensions/$key.txt から外すか、手で入れる）"
-                todo "$cli の拡張機能 $ext を入れられなかった（editors/extensions/$key.txt を見直す）"
-            fi
-        done < "$DOTFILES_DIR/editors/extensions/$key.txt"
-    done
-}
-
-setup_runtimes() {
-    log "mise（Node）と uv（Python ${PYTHON_VERSION}）"
-    if has mise; then
-        # 調べられなかったとき（設定が信頼されていないなど）も入れる。mise install は設定を信頼してから入れる
-        local missing
-        # HOME で動かす（実行したフォルダのプロジェクトの mise の設定を拾わない）
-        if ! missing=$(mise ls --missing -C "$HOME" 2>&1) || [ -n "$missing" ]; then
-            change CREATED "mise install（~/.config/mise/config.toml のツール）" mise install -C "$HOME"
-        fi
-    else
-        plan "mise install（brew bundle で mise を入れたあと）"
-    fi
-    if has uv; then
-        if ! readlink "$HOME/.local/bin/python3" 2>/dev/null | grep -q "uv/python/cpython-$PYTHON_VERSION"; then
-            change CREATED "uv python install $PYTHON_VERSION --default（~/.local/bin/python3）" \
-                uv python install "$PYTHON_VERSION" --default
-        fi
-    else
-        plan "uv python install $PYTHON_VERSION --default（brew bundle で uv を入れたあと）"
-    fi
-}
-
-# コミット前に gitleaks で秘密情報を検査する
-setup_git_hooks() {
-    log "git の hook（gitleaks）"
-    if [ "$(git -C "$DOTFILES_DIR" config core.hooksPath || true)" != .githooks ]; then
-        change CREATED "git config core.hooksPath .githooks" git -C "$DOTFILES_DIR" config core.hooksPath .githooks
-    fi
-}
-
-# 開発用のファイルを VS Code で開く。変えられなかった拡張子があってもほかの手順は止めない
-setup_default_apps() {
-    log "ファイルを開くアプリ（macos/default-apps.sh）"
-    if "$DOTFILES_DIR/macos/default-apps.sh" --check >/dev/null 2>&1; then
-        return
-    fi
-    plan "macos/default-apps.txt の拡張子を VS Code で開くようにする（1 件ごとに確認のダイアログが出る）"
-    if [ "$DRY_RUN" = true ]; then
-        CREATED=$((CREATED + 1))
-    elif "$DOTFILES_DIR/macos/default-apps.sh"; then
-        CREATED=$((CREATED + 1))
-    else
-        todo "VS Code で開くようにできなかった拡張子がある（./macos/default-apps.sh --check で見る）"
-    fi
-}
-
-# 確認してから入れる（入れると Dock・Finder が再起動する）。--dry-run・確認できないときは入れない
-setup_macos_defaults() {
-    log "macOS の設定（macos/defaults.sh）"
-    if [ "$DRY_RUN" = true ]; then
-        plan "（実行時に確認）./macos/defaults.sh"
-        return
-    fi
-    local answer=""
-    printf "  macOS の設定（Dock・Finder・キーボード・トラックパッド）を入れますか？ (y/N): "
-    read -r answer || true
-    case "$answer" in
-        [yY]|[yY][eE][sS]) "$DOTFILES_DIR/macos/defaults.sh"; info "macOS の設定を入れました" ;;
-        *) info "入れませんでした（あとで ./macos/defaults.sh で入れられます）" ;;
-    esac
-}
-
-# 機械では決められない残りの作業を集める（~ は表示用の文字なので展開しない）
-# shellcheck disable=SC2088
-collect_todo() {
-    if [ ! -f "$HOME/.gitconfig.local" ]; then
-        todo "~/.gitconfig.local に user.name・user.email・user.signingkey を書く（README の「Git の名前と署名」）"
-    fi
-    if ! ssh -o BatchMode=yes -o ConnectTimeout=5 -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
-        todo "ssh -T git@github.com が通ることを確かめる（1Password に SSH 鍵を入れ、GitHub に公開鍵を登録する）"
-    fi
-    [ -d "$HOME/.agents" ] || todo "~/.agents を clone して、その手順で launchd とフックを入れ直す（README の「Agent 基盤」）"
-    [ -d "$HOME/brain" ] || todo "~/brain を clone する（README の「Agent 基盤」）"
-    todo "MCP のトークンを 1Password から入れ直す（README の「Agent 基盤」。値は書き写さない）"
-    todo "git の外のデータと手で入れ直すアプリ（docs/manual-migration.md）"
-}
+# 手順（main が順に呼ぶ）
+# shellcheck source=lib/install-system.sh
+source "$DOTFILES_DIR/lib/install-system.sh"
+# shellcheck source=lib/install-links.sh
+source "$DOTFILES_DIR/lib/install-links.sh"
+# shellcheck source=lib/install-tools.sh
+source "$DOTFILES_DIR/lib/install-tools.sh"
 
 main() {
     if [ "$DRY_RUN" = true ]; then

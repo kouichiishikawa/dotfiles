@@ -110,7 +110,11 @@ brew bundle check --no-upgrade --verbose --file=Brewfile   # Brewfile にあっ�
 ├── editors/                  # VS Code（EDITOR は code）と Cursor の設定・キー割り当て・拡張機能の一覧
 ├── .githooks/pre-commit      # gitleaks による秘密情報の検査
 ├── archive/                  # 使わなくなった古いファイルの退避先
-├── install.sh                # 新しい Mac を dotfiles の状態にする
+├── install.sh                # 新しい Mac を dotfiles の状態にする（引数・共通の仕組み・手順の順番）
+├── lib/install-system.sh     # install.sh の手順: Xcode CLT・Homebrew・1Password・brew bundle
+├── lib/install-links.sh      # install.sh の手順: リンク（LINK_FILES・SSH・エディタ）とエディタの拡張機能
+├── lib/install-tools.sh      # install.sh の手順: mise と uv・git の hook・開くアプリ・macOS の設定・人がやること
+├── lib/link-files.sh         # ホームにリンクするファイルの一覧（install.sh・test.sh が使う）
 ├── lib/manual-casks.sh       # brew の外で入れたアプリを brew bundle の対象から外す（install.sh・test.sh が使う）
 ├── rollback.sh               # install.sh のリンクと退避を戻す
 └── test.sh                   # この Mac が dotfiles の状態かを確かめる

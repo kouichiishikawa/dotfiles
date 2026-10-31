@@ -11,8 +11,9 @@ set -u
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="${DOTFILES_DIR:-$REPO_DIR}"
 DOTFILES_DIR=${DOTFILES_DIR%/}
-# install.sh の LINK_FILES と揃える
-LINK_FILES=(.zshrc .zprofile .gitconfig .config/starship.toml .config/ghostty/config .config/git/ignore .config/mise/config.toml .config/cmux/cmux.json)
+# install.sh と同じ LINK_FILES を読む
+# shellcheck source=lib/link-files.sh
+source "$REPO_DIR/lib/link-files.sh"
 PYTHON_VERSION=3.12
 # シェルの起動時間の最速値の上限（秒）。中央値は負荷しだいで上限を超えるので判定に使わない
 STARTUP_LIMIT=0.3
