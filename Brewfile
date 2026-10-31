@@ -17,8 +17,6 @@ brew "carapace"
 brew "cmake"
 # Get a file from an HTTP, HTTPS or FTP server
 brew "curl"
-# Select default apps for documents and URL schemes on macOS（macos/default-apps.sh）
-brew "duti"
 # Modern, maintained replacement for ls
 brew "eza"
 # Simple, fast and user-friendly alternative to find

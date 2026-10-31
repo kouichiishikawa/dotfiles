@@ -242,7 +242,7 @@ setup_default_apps() {
     if "$DOTFILES_DIR/macos/default-apps.sh" --check >/dev/null 2>&1; then
         return
     fi
-    plan "macos/default-apps.txt の拡張子を VS Code で開くようにする"
+    plan "macos/default-apps.txt の拡張子を VS Code で開くようにする（1 件ごとに確認のダイアログが出る）"
     if [ "$DRY_RUN" = true ]; then
         CREATED=$((CREATED + 1))
     elif "$DOTFILES_DIR/macos/default-apps.sh"; then

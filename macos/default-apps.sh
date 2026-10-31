@@ -1,6 +1,7 @@
 #!/bin/bash
-# macos/default-apps.txt の拡張子を、Finder でダブルクリックしたときに VS Code で開くようにする（duti を使う）
-# 何度実行しても同じ結果になる（VS Code になっているものは触らない）
+# macos/default-apps.txt の拡張子を、Finder でダブルクリックしたときに VS Code で開くようにする
+# 何度実行しても同じ結果になる（VS Code になっているものは触らない）。中身は default-apps.swift
+# macOS 27 では変える 1 件ごとに確認のダイアログが出る。VS Code の方を押すまで変わらない
 #
 # 使い方: ./macos/default-apps.sh            VS Code になっていないものを VS Code にする
 #         ./macos/default-apps.sh --dry-run  変えるものを出すだけで、何も変えない
@@ -8,20 +9,19 @@
 
 set -euo pipefail
 
-BUNDLE_ID=com.microsoft.VSCode
-LIST="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/default-apps.txt"
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 MODE=apply
 case "${1:-}" in
     "") ;;
     --dry-run) MODE=dry-run ;;
     --check) MODE=check ;;
-    -h|--help) sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "不明な引数: ${1}（--help で使い方を表示）" >&2; exit 1 ;;
 esac
 
-if ! command -v duti >/dev/null 2>&1; then
-    echo "duti が無い（brew bundle --file=Brewfile で入れる）" >&2
+if ! command -v swift >/dev/null 2>&1; then
+    echo "swift が無い（xcode-select --install で Command Line Tools を入れる）" >&2
     exit 1
 fi
 if [ ! -d "/Applications/Visual Studio Code.app" ]; then
@@ -29,32 +29,4 @@ if [ ! -d "/Applications/Visual Studio Code.app" ]; then
     exit 1
 fi
 
-# duti -x は 3 行目にバンドル ID を出す。開くアプリが無いときは何も出さずに失敗する
-handler() { duti -x "$1" 2>/dev/null | sed -n 3p || true; }
-
-wrong=0
-while IFS= read -r ext || [ -n "$ext" ]; do
-    case "$ext" in ''|'#'*) continue ;; esac
-    current=$(handler "$ext")
-    if [ "$current" = "$BUNDLE_ID" ]; then
-        continue
-    fi
-    case "$MODE" in
-        check) echo ".$ext: ${current:-開くアプリが無い}"; wrong=$((wrong + 1)) ;;
-        dry-run) echo "+ .$ext: ${current:-開くアプリが無い} → $BUNDLE_ID" ;;
-        apply)
-            echo "+ .$ext: ${current:-開くアプリが無い} → $BUNDLE_ID"
-            # duti は変わらなくても 0 を返すことがあるので、読み直して確かめる
-            duti -s "$BUNDLE_ID" ".$ext" all 2>&1 | sed 's/^/    /' || true
-            if [ "$(handler "$ext")" != "$BUNDLE_ID" ]; then
-                echo "    ! .$ext が VS Code にならなかった（Finder で「情報を見る」→「このアプリケーションで開く」→「すべてを変更」）" >&2
-                wrong=$((wrong + 1))
-            fi
-            ;;
-    esac
-done < "$LIST"
-
-if [ "$wrong" -gt 0 ]; then
-    echo "VS Code になっていない拡張子: $wrong 個" >&2
-    exit 1
-fi
+exec swift "$DIR/default-apps.swift" "$MODE" "$DIR/default-apps.txt"
