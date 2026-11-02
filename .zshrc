@@ -80,11 +80,12 @@ alias o='open_with_code'
 # MCP 用のトークンは 1Password Environments の Local .env file（名前付きパイプ）から、claude の起動時だけ読む。
 # シェルを開いただけでは読まない。承認は 1Password がロックされるまで 1 回。値はこのシェルには残さない（サブシェルで渡す）
 # GitHub MCP はここを使わず、~/.claude.json の headersHelper（~/.local/bin/github-mcp-headers）が gh の認証から渡す
-# 変数名は Claude Code がフックに渡す CLAUDE_ENV_FILE と重ならないようにしている
-_CLAUDE_MCP_ENV_FILE=~/.config/op-env/claude.env
+# パスは関数の中に持つ。Claude Code の Bash ツールのシェルは関数だけを写し、export していない変数は写さないため（DEV-248）
+# 別の場所を使うときだけ _CLAUDE_MCP_ENV_FILE を export する。名前は Claude Code がフックに渡す CLAUDE_ENV_FILE と重ねない
 claude() {
-  if [[ ! -p $_CLAUDE_MCP_ENV_FILE ]]; then
-    print -u2 "claude: $_CLAUDE_MCP_ENV_FILE が 1Password からマウントされていません。MCP のトークンなしで起動します"
+  local f=${_CLAUDE_MCP_ENV_FILE:-$HOME/.config/op-env/claude.env}
+  if [[ ! -p $f ]]; then
+    print -u2 "claude: $f が 1Password からマウントされていません。MCP のトークンなしで起動します"
     command claude "$@"; return
   fi
   (
@@ -95,7 +96,7 @@ claude() {
       local k=${line%%=*} v=${line#*=}
       [[ $v == \"*\" || $v == \'*\' ]] && v=${v:1:-1}
       export "$k=$v"
-    done < $_CLAUDE_MCP_ENV_FILE
+    done < $f
     exec command claude "$@"
   )
 }
