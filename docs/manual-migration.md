@@ -78,8 +78,8 @@ App Store のアプリ（`mas list` の 10 個）は全部 Brewfile にある。
 
 | 何 | 場所 | 1Password | 移し方 |
 |---|---|---|---|
-| シェルの秘密の環境変数 | `~/.secrets.zsh`（GitHub の PAT と Supabase のアクセストークンの 2 つ） | ✅ | 1Password から書き戻す |
-| Claude Code の MCP 設定とトークン | `~/.claude.json`（トークンを持つのは GitHub MCP の Authorization ヘッダーだけ。ほかの MCP は OAuth） | ✅ | MCP は入れ直して認証し直す。GitHub の PAT は 1Password から |
+| MCP 用のトークン（GitHub の PAT と Supabase のアクセストークン） | 1Password Environments の `claude-mcp`。`~/.config/op-env/claude.env` に Local .env file（名前付きパイプ）としてマウントし、`.zshrc` の `claude` 関数が起動時だけ読む。ディスクに平文は無い | ✅ | 新しい Mac の 1Password で `claude-mcp` の Connect to → Local .env file を同じパスでマウントし直す（README の 2） |
+| Claude Code の MCP 設定 | `~/.claude.json`（GitHub MCP の Authorization ヘッダーは `${GITHUB_MCP_PAT}` を参照するだけで、値は持たない。ほかの MCP は OAuth） | ✅ | MCP は入れ直して認証し直す。トークンは上の行 |
 | Git の名前・メールアドレス・署名の鍵 | `~/.gitconfig.local`（秘密は署名の鍵だけ） | ✅ | README の `git config --file ~/.gitconfig.local` で作り直す。署名の鍵は 1Password の SSH 鍵 |
 | Codex の認証と設定 | `~/.codex/auth.json`・`~/.codex/config.toml` | — | `codex login` でサインインし直す。config は Agent 基盤の移行で扱う |
 | GitHub CLI | `~/.config/gh/hosts.yml` | — | `gh auth login` で作り直す |

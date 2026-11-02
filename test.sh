@@ -156,6 +156,34 @@ else
     fail "dotfiles の core.hooksPath が .githooks ではない"
 fi
 
+section "MCP のトークン（1Password Environments。中身は読まない）"
+# 読むと 1Password の承認が出るので、種類と名前だけを見る
+if [ -p "$HOME/.config/op-env/claude.env" ]; then
+    pass "~/.config/op-env/claude.env が名前付きパイプ（1Password がマウントしている）"
+else
+    fail "~/.config/op-env/claude.env がパイプではない（1Password の Environments で claude-mcp をマウントする。README の 2）"
+fi
+if [ -e "$HOME/.secrets.zsh" ]; then
+    fail "~/.secrets.zsh が残っている（平文のトークン。~/.Trash に退避する）"
+else
+    pass "~/.secrets.zsh が無い"
+fi
+# 新しい対話シェルがトークンを持たない（= シェルを開いても承認が出ない）。親の環境を引き継がないように env -i で起動する
+# 読ませるのはこのリポジトリの .zshrc（一時フォルダに張ったリンク経由。.zcompdump もそこに書かれる）
+zdot=$(mktemp -d)
+ln -s "$REPO_DIR/.zshrc" "$zdot/.zshrc"
+leaked=$(env -i HOME="$HOME" USER="$USER" TERM=dumb PATH=/usr/bin:/bin ZDOTDIR="$zdot" zsh -i -c 'for v in GITHUB_MCP_PAT SUPABASE_ACCESS_TOKEN; do [ -n "${(P)v}" ] && print -n "$v "; done' 2>/dev/null)
+if [ -z "$leaked" ]; then
+    pass "新しい zsh -i はトークンを持たない"
+else
+    fail "新しい zsh -i がトークンを持っている: $leaked"
+fi
+if [ "$(env -i HOME="$HOME" USER="$USER" TERM=dumb PATH=/usr/bin:/bin ZDOTDIR="$zdot" zsh -i -c 'whence -w claude' 2>/dev/null)" = "claude: function" ]; then
+    pass "claude は .zshrc の関数（起動時にトークンを読む）"
+else
+    fail "claude が .zshrc の関数になっていない"
+fi
+
 echo
 echo "通った: $PASSED / 失敗: $FAILED"
 if [ "$FAILED" -eq 0 ]; then
