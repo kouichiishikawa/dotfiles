@@ -1,0 +1,22 @@
+#!/bin/sh
+# Claude Code の GitHub MCP（リモート）の headersHelper。接続のたびに呼ばれ、ヘッダーを JSON で標準出力に書く
+# ~/.claude.json の github: "headersHelper": "$HOME/.local/bin/github-mcp-headers"（README の「Agent 基盤」）
+# トークンは gh の認証（キーチェーン）から取り、ディスクにも環境変数にも置かない。
+# MCP は読み取り専用（X-MCP-Readonly）。書き込みは gh で行う
+# 値は標準出力の JSON にだけ書く。失敗したときは理由だけを標準エラーに書き、終了コード 1
+
+# launchd などから起動されて PATH に Homebrew が無くても gh を見つける
+PATH="$PATH:/opt/homebrew/bin:/usr/local/bin"
+if ! command -v gh >/dev/null 2>&1; then
+    echo "github-mcp-headers: gh が見つからない（brew install gh）" >&2
+    exit 1
+fi
+token=$(gh auth token --hostname github.com 2>/dev/null)
+# 想定外の文字が JSON に紛れ込まないよう、トークンの形だけを確かめる（値は出さない）
+case $token in
+    '' | *[!A-Za-z0-9_]*)
+        echo "github-mcp-headers: gh auth token が使えない（gh auth login をし直す）" >&2
+        exit 1
+        ;;
+esac
+printf '{"Authorization":"Bearer %s","X-MCP-Readonly":"true"}\n' "$token"
