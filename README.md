@@ -66,7 +66,7 @@ git clone git@github.com:kouichiishikawa/agents.git ~/.agents
 git clone git@github.com:kouichiishikawa/brain.git ~/brain
 ```
 - 自分で作った launchd（`~/Library/LaunchAgents/com.kouichiishikawa.*`）は dotfiles に入れない。plist の元がある `~/.agents`（`skills/*/launchd/`）と各リポジトリの `launchd/` から入れ直す。sprint-followup は `~/.agents/skills/sprint/references/watchdog.md` の「followup の入れ方」を見る
-- Claude Code のフック・スキルも dotfiles に入れない。`~/.agents` の README の手順で入れ直す
+- Claude Code と Agent 基盤（`~/.claude` のリンク・プラグイン・MCP・Codex・cmux のワークスペース・自作の launchd）は `~/.agents/docs/new-mac.md` を上から順に実行する（この README の 1〜5 が前提）
 - MCP サーバーのトークンは 2 の 4 のマウントで届く。値はこのリポジトリにも会話にも書き写さない（`~/.secrets.zsh` はもう使わない）
 - GitHub MCP は PAT を使わない。接続のたびに `~/.local/bin/github-mcp-headers`（install.sh がリンクする）が gh の認証（キーチェーン）からトークンを取り、読み取り専用のヘッダー（`X-MCP-Readonly`）と一緒に渡す。環境変数が要らないので、`claude` 関数を通らない起動（子タブ・launchd）でもつながる。書き込みは gh で行う
   ```bash

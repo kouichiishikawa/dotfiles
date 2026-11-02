@@ -166,7 +166,7 @@ rsync -a --files-from=/tmp/migration-secrets.txt ~/Documents/ "$DEST/Documents-s
 | Logi Options+ | サインインして、アカウントのバックアップから戻す |
 | VS Code・Cursor | 各アプリの設定同期（Settings Sync）で戻る。同期を使っていなければ拡張の一覧を書き出す |
 | Obsidian | 保管庫は iCloud（iCloud Drive の Obsidian フォルダ）と `~/brain`（git）にある。新しい Mac で保管庫を開き直す |
-| Claude Code・Codex（`~/.claude`・`~/.codex`） | Agent 基盤の移行手順で扱う（このチェックリストの外）。`~/.agents`・`~/brain` は GitHub に remote がある |
+| Claude Code・Codex（`~/.claude`・`~/.codex`） | `~/.agents/docs/new-mac.md` で扱う。古い Mac では、その手順の 1（書き出し）を移行の直前に行う（このチェックリストの外）。`~/.agents`・`~/brain` は GitHub に remote がある |
 | ブラウザ（Chrome） | サインインして同期で戻る。Arc と Dia は入れない |
 | macOS の設定 | dotfiles の `macos/defaults.sh` |
 
@@ -174,7 +174,7 @@ rsync -a --files-from=/tmp/migration-secrets.txt ~/Documents/ "$DEST/Documents-s
 
 | 何 | 場所 | 移し方 |
 |---|---|---|
-| 自作の launchd（7 個） | `~/Library/LaunchAgents/com.kouichiishikawa.*` | plist の元は git にある（`~/.agents/skills/*/launchd/` と design-reference のリポジトリの `launchd/`）。入れ方は README の 5。`sprint-followup` は `~/.agents/skills/sprint/references/watchdog.md` の「followup の入れ方」 |
+| 自作の launchd（7 個） | `~/Library/LaunchAgents/com.kouichiishikawa.*` | plist の元は git にある（`~/.agents/skills/*/launchd/` と design-reference のリポジトリの `launchd/`）。入れ方は README の 5。一覧は `~/.agents/docs/new-mac.md` の 10。`sprint-followup` は `~/.agents/skills/sprint/references/watchdog.md` の「followup の入れ方」 |
 | ほかのアプリが入れた launchd | `~/Library/LaunchAgents`・`/Library/LaunchAgents`・`/Library/LaunchDaemons`（Adobe・Google・Dropbox・Logi・Zoom・Epson・Microsoft など） | アプリを入れ直せば作られる。手で移さない |
 | ログインシェル以外のシェルの設定 | `~/.bash_profile` | DEV-202 で扱う |
 | シェルの履歴 | `~/.zsh_history`（324K） | 要るなら 5 の rsync に足す |
