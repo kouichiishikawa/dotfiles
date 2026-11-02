@@ -77,8 +77,26 @@ open_with_code() {
 # 'o' コマンドを開発ファイル用に設定
 alias o='open_with_code'
 
-# 秘密情報(git管理外) — MCP用トークン等は ~/.secrets.zsh に置く
-[[ -f ~/.secrets.zsh ]] && source ~/.secrets.zsh
+# MCP 用のトークンは 1Password Environments の Local .env file（名前付きパイプ）から、claude の起動時だけ読む。
+# シェルを開いただけでは読まない。承認は 1Password がロックされるまで 1 回。値はこのシェルには残さない（サブシェルで渡す）
+CLAUDE_ENV_FILE=~/.config/op-env/claude.env
+claude() {
+  if [[ ! -p $CLAUDE_ENV_FILE ]]; then
+    print -u2 "claude: $CLAUDE_ENV_FILE が 1Password からマウントされていません。MCP のトークンなしで起動します"
+    command claude "$@"; return
+  fi
+  (
+    local line
+    while IFS= read -r line || [[ -n $line ]]; do
+      [[ $line =~ '^[A-Za-z_][A-Za-z0-9_]*=' ]] || continue
+      line=${line%$'\r'}
+      local k=${line%%=*} v=${line#*=}
+      [[ $v == \"*\" || $v == \'*\' ]] && v=${v:1:-1}
+      export "$k=$v"
+    done < $CLAUDE_ENV_FILE
+    exec command claude "$@"
+  )
+}
 
 # zsh のプラグイン（brew）。syntax-highlighting は最後に読む
 source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
