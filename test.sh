@@ -183,6 +183,23 @@ if [ "$(env -i HOME="$HOME" USER="$USER" TERM=dumb PATH=/usr/bin:/bin ZDOTDIR="$
 else
     fail "claude が .zshrc の関数になっていない"
 fi
+# Claude Code の Bash ツールのシェルは関数だけを写し、export していない変数は写さない（DEV-248）。
+# 関数の定義だけを変数の無い zsh -f に移し、一時の HOME の偽のパイプ（本物は読まない）から値が届くかを見る
+fakehome=$(mktemp -d)
+mkdir -p "$fakehome/.config/op-env" "$fakehome/bin"
+mkfifo "$fakehome/.config/op-env/claude.env"
+printf '#!/bin/sh\necho "${DEV248_FAKE:+set}"\n' > "$fakehome/bin/claude"
+chmod +x "$fakehome/bin/claude"
+fndef=$(env -i HOME="$HOME" USER="$USER" TERM=dumb PATH=/usr/bin:/bin ZDOTDIR="$zdot" zsh -i -c 'functions claude' 2>/dev/null)
+printf 'DEV248_FAKE="x"\n' > "$fakehome/.config/op-env/claude.env" &
+writer=$!
+got=$(env -i HOME="$fakehome" PATH="$fakehome/bin:/usr/bin:/bin" zsh -f -c "$fndef"$'\nclaude' 2>/dev/null)
+kill "$writer" 2>/dev/null; wait "$writer" 2>/dev/null
+if [ "$got" = set ]; then
+    pass "claude 関数は変数の無いシェル（Bash ツール）でもパイプを読む"
+else
+    fail "claude 関数が変数の無いシェルでパイプを見失う（_CLAUDE_MCP_ENV_FILE に頼っている）"
+fi
 
 section "GitHub MCP（gh の認証を headersHelper で渡す。値は出さない）"
 helper="$HOME/.local/bin/github-mcp-headers"
