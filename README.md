@@ -18,7 +18,7 @@ SSH の鍵（`.ssh/config`）とコミットの署名（`.gitconfig` の `op-ssh
 1. https://1password.com/downloads/mac から入れてサインインする（Homebrew を先に入れたなら `brew install --cask 1password` でもよい。`install.sh` も無ければ入れる）
 2. 1Password の設定 > 開発者 で「SSH エージェントを使用」を有効にする
 3. GitHub に登録してある SSH 鍵が 1Password に入っていることを確かめる
-4. Developer > View Environments の `claude-mcp` を開き、Connect to > Local .env file で `~/.config/op-env/claude.env` にマウントする（先に `mkdir -m 700 -p ~/.config/op-env`）。MCP 用のトークンは `claude` を起動したときだけここから読む（`.zshrc` の `claude` 関数）。承認は 1Password がロックされるまで 1 回
+4. Developer > View Environments の `claude-mcp` を開き、Connect to > Local .env file で `~/.config/op-env/claude.env` にマウントする（先に `mkdir -m 700 -p ~/.config/op-env`）。MCP 用のトークン（Supabase のアクセストークン）は `claude` を起動したときだけここから読む（`.zshrc` の `claude` 関数）。承認は 1Password がロックされるまで 1 回。GitHub MCP はここを使わない（5 の gh の認証）
 
 ### 3. dotfiles を clone して install.sh を実行する
 ```bash
@@ -68,6 +68,15 @@ git clone git@github.com:kouichiishikawa/brain.git ~/brain
 - 自分で作った launchd（`~/Library/LaunchAgents/com.kouichiishikawa.*`）は dotfiles に入れない。plist の元がある `~/.agents`（`skills/*/launchd/`）と各リポジトリの `launchd/` から入れ直す。sprint-followup は `~/.agents/skills/sprint/references/watchdog.md` の「followup の入れ方」を見る
 - Claude Code のフック・スキルも dotfiles に入れない。`~/.agents` の README の手順で入れ直す
 - MCP サーバーのトークンは 2 の 4 のマウントで届く。値はこのリポジトリにも会話にも書き写さない（`~/.secrets.zsh` はもう使わない）
+- GitHub MCP は PAT を使わない。接続のたびに `~/.local/bin/github-mcp-headers`（install.sh がリンクする）が gh の認証（キーチェーン）からトークンを取り、読み取り専用のヘッダー（`X-MCP-Readonly`）と一緒に渡す。環境変数が要らないので、`claude` 関数を通らない起動（子タブ・launchd）でもつながる。書き込みは gh で行う
+  ```bash
+  gh auth login                       # ブラウザで承認する（トークンはキーチェーンに入る）
+  claude mcp add-json github --scope user \
+    '{"type":"http","url":"https://api.githubcopilot.com/mcp","headersHelper":"$HOME/.local/bin/github-mcp-headers"}'
+  claude mcp list                     # github が ✔ Connected
+  ```
+  `$HOME` はシングルクォートの中なので展開されずに書かれ、Claude Code がヘルパーを実行するときにシェルが展開する
+- gh の権限を絞るとき（任意。2026-11-02 は絞らないと決めた）: `gh auth refresh --reset-scopes -s workflow` で最小（`repo`・`read:org`・`gist`）＋ `workflow` にする。ブラウザの承認が要る。`project`・`notifications` などは要るときに `gh auth refresh -s <scope>` で足す。最小の 3 つは外せない
 
 ### 6. 手で入れ直すもの
 git の外にあるデータと、Brewfile に無いアプリの一覧は [docs/manual-migration.md](docs/manual-migration.md)。
@@ -76,7 +85,7 @@ git の外にあるデータと、Brewfile に無いアプリの一覧は [docs/
 ```bash
 ./test.sh
 ```
-新しいシェルを開いてから実行する（`exec zsh -l`）。リンク・主要なツール（brew・mise・node・uv・python3・starship・gitleaks・delta・1Password の op-ssh-sign）・`brew bundle check`・シェルの起動時間（5 回の最速値が 0.3 秒以下。中央値とロードアベレージも表示する）・`ssh -T git@github.com`・git の署名の設定・`core.hooksPath`・MCP のトークンの置き場所（パイプになっているか、シェルが値を読まないか。中身は読まない）を見て、1 つでも失敗すれば終了コード 1 になる。
+新しいシェルを開いてから実行する（`exec zsh -l`）。リンク・主要なツール（brew・mise・node・uv・python3・starship・gitleaks・delta・1Password の op-ssh-sign）・`brew bundle check`・シェルの起動時間（5 回の最速値が 0.3 秒以下。中央値とロードアベレージも表示する）・`ssh -T git@github.com`・git の署名の設定・`core.hooksPath`・MCP のトークンの置き場所（パイプになっているか、シェルが値を読まないか。中身は読まない）・GitHub MCP の headersHelper（ヘッダーの形と `~/.claude.json` の設定。値は出さない）を見て、1 つでも失敗すれば終了コード 1 になる。
 
 ## ふだんの使い方
 

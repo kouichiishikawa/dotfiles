@@ -184,6 +184,31 @@ else
     fail "claude が .zshrc の関数になっていない"
 fi
 
+section "GitHub MCP（gh の認証を headersHelper で渡す。値は出さない）"
+helper="$HOME/.local/bin/github-mcp-headers"
+# 形だけを見る: Bearer の後ろが gh のトークンの形で、読み取り専用のヘッダーがある
+if [ -x "$helper" ] && "$helper" 2>/dev/null | python3 -I -c '
+import json, re, sys
+d = json.load(sys.stdin)
+ok = re.fullmatch(r"Bearer [A-Za-z0-9_]{20,}", d.get("Authorization", "")) and d.get("X-MCP-Readonly") == "true"
+sys.exit(0 if ok else 1)' 2>/dev/null; then
+    pass "github-mcp-headers が Authorization と X-MCP-Readonly: true を返す"
+else
+    fail "github-mcp-headers がヘッダーを返さない（リンク・gh auth status を見る）"
+fi
+# ~/.claude.json の github が headersHelper を使い、環境変数のトークンを参照していない
+if python3 -I - "$HOME/.claude.json" "$helper" 2>/dev/null <<'PY'
+import json, os, sys
+g = json.load(open(sys.argv[1])).get("mcpServers", {}).get("github", {})
+helper = os.path.expandvars(g.get("headersHelper", ""))
+sys.exit(0 if helper == sys.argv[2] and "GITHUB_MCP_PAT" not in json.dumps(g) else 1)
+PY
+then
+    pass "~/.claude.json の github は headersHelper（GITHUB_MCP_PAT を参照しない）"
+else
+    fail "~/.claude.json の github が headersHelper になっていない（README の「Agent 基盤」）"
+fi
+
 echo
 echo "通った: $PASSED / 失敗: $FAILED"
 if [ "$FAILED" -eq 0 ]; then

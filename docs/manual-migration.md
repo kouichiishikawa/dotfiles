@@ -78,11 +78,11 @@ App Store のアプリ（`mas list` の 10 個）は全部 Brewfile にある。
 
 | 何 | 場所 | 1Password | 移し方 |
 |---|---|---|---|
-| MCP 用のトークン（GitHub の PAT と Supabase のアクセストークン） | 1Password Environments の `claude-mcp`。`~/.config/op-env/claude.env` に Local .env file（名前付きパイプ）としてマウントし、`.zshrc` の `claude` 関数が起動時だけ読む。ディスクに平文は無い | ✅ | 新しい Mac の 1Password で `claude-mcp` の Connect to → Local .env file を同じパスでマウントし直す（README の 2） |
-| Claude Code の MCP 設定 | `~/.claude.json`（GitHub MCP の Authorization ヘッダーは `${GITHUB_MCP_PAT}` を参照するだけで、値は持たない。ほかの MCP は OAuth） | ✅ | MCP は入れ直して認証し直す。トークンは上の行 |
+| MCP 用のトークン（Supabase のアクセストークン。GitHub MCP は gh の認証を使うので PAT は無い） | 1Password Environments の `claude-mcp`。`~/.config/op-env/claude.env` に Local .env file（名前付きパイプ）としてマウントし、`.zshrc` の `claude` 関数が起動時だけ読む。ディスクに平文は無い | ✅ | 新しい Mac の 1Password で `claude-mcp` の Connect to → Local .env file を同じパスでマウントし直す（README の 2） |
+| Claude Code の MCP 設定 | `~/.claude.json`（GitHub MCP は `headersHelper` で `~/.local/bin/github-mcp-headers` を呼ぶだけで、値は持たない。ほかの MCP は OAuth） | — | MCP は入れ直して認証し直す。GitHub MCP は `gh auth login` のあと README の 5 の `claude mcp add-json` |
 | Git の名前・メールアドレス・署名の鍵 | `~/.gitconfig.local`（秘密は署名の鍵だけ） | ✅ | README の `git config --file ~/.gitconfig.local` で作り直す。署名の鍵は 1Password の SSH 鍵 |
 | Codex の認証と設定 | `~/.codex/auth.json`・`~/.codex/config.toml` | — | `codex login` でサインインし直す。config は Agent 基盤の移行で扱う |
-| GitHub CLI | `~/.config/gh/hosts.yml` | — | `gh auth login` で作り直す |
+| GitHub CLI | `~/.config/gh/hosts.yml`（トークンはキーチェーン。GitHub MCP もこれを使う） | — | `gh auth login` で作り直す。権限を絞るなら README の 5 の `gh auth refresh --reset-scopes` |
 | Google Cloud CLI | `~/.config/gcloud/` | — | `gcloud auth login` で作り直す |
 | AWS の SSO | `~/.aws/sso/` | — | `aws sso login` で作り直す |
 | Docker | `~/.docker/config.json` | — | Docker Desktop でサインインし直す |
