@@ -10,9 +10,10 @@ cursor-color = #316EEE
 # フォントはここだけで決め、cmux 側には書かない。
 # ①② ※ ○ → などは East Asian Width が Ambiguous で、Ghostty も Claude Code も 1 マスとして扱う。
 # どのフォントでも 1 マスの幅に縮めて描かれるので、見やすさは font-size で決まる。
-# HW 版の 16pt は、3:5 の Moralerspace Neon 14pt と 1 マスの幅が同じで、字が大きく、漢字の間に隙間が出ない。
+# 16pt は cmux で字が大きすぎたので 14pt にした（2026-11-03）。
+# 単体の Ghostty 1.4.0 で余白 0・行の高さ 10% のときの 1 マスは、14pt で 7.5×18.5pt、16pt で 8.5×21pt（80 マスの幅は 600pt と 680pt）。
 font-family = "Moralerspace Neon HW"
-font-size = 16
+font-size = 14
 
 # Line Height (デフォルト: 0 = 1.0倍)
 # 10% = 約1.1倍
