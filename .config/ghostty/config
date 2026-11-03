@@ -5,6 +5,11 @@ cursor-color = #316EEE
 
 # Font
 # Moralerspace Neon (日本語対応プログラミングフォント)
+# cmux はこのファイルのあとに ~/Library/Application Support/com.cmuxterm.app/config.ghostty を読む。
+# そちらに font-family / font-size があると、ここの指定は上書きされる（2026-11 は SF Mono 12pt が効いていた）。
+# フォントはここだけで決め、cmux 側には書かない。
+# ①② ※ ○ → などは East Asian Width が Ambiguous で、Ghostty も Claude Code も 1 マスとして扱う。
+# どのフォントでも 1 マスの幅に縮めて描かれるので、見やすさは font-size で決まる（12pt では小さすぎた）。
 font-family = "Moralerspace Neon"
 font-size = 14
 
