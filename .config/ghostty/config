@@ -4,14 +4,15 @@ theme = Vercel
 cursor-color = #316EEE
 
 # Font
-# Moralerspace Neon (日本語対応プログラミングフォント)
+# Moralerspace Neon HW（和文と英字の幅が 1:2。Brewfile の font-moralerspace-hw。Nerd Font の記号入り）
 # cmux はこのファイルのあとに ~/Library/Application Support/com.cmuxterm.app/config.ghostty を読む。
 # そちらに font-family / font-size があると、ここの指定は上書きされる（2026-11 は SF Mono 12pt が効いていた）。
 # フォントはここだけで決め、cmux 側には書かない。
 # ①② ※ ○ → などは East Asian Width が Ambiguous で、Ghostty も Claude Code も 1 マスとして扱う。
-# どのフォントでも 1 マスの幅に縮めて描かれるので、見やすさは font-size で決まる（12pt では小さすぎた）。
-font-family = "Moralerspace Neon"
-font-size = 14
+# どのフォントでも 1 マスの幅に縮めて描かれるので、見やすさは font-size で決まる。
+# HW 版の 16pt は、3:5 の Moralerspace Neon 14pt と 1 マスの幅が同じで、字が大きく、漢字の間に隙間が出ない。
+font-family = "Moralerspace Neon HW"
+font-size = 16
 
 # Line Height (デフォルト: 0 = 1.0倍)
 # 10% = 約1.1倍
