@@ -108,6 +108,8 @@ cask "focusrite-control-2"
 cask "font-hackgen-nerd"
 cask "font-jetbrains-mono-nerd-font"
 cask "font-moralerspace"
+# Ghostty / cmux のフォント（和文と英字の幅が 1:2 の HW 版）
+cask "font-moralerspace-hw"
 # Tool that helps teams design every part of the product experience
 cask "framer"
 # Set of tools to manage resources and applications hosted on Google Cloud
