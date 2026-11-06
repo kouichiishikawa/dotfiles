@@ -125,6 +125,14 @@ else
 fi
 
 section "git と SSH"
+# fetch・push は https と gh の認証で通る（SSH を使えなくして、非公開のリポジトリで確かめる）
+# 時間切れは git の http.lowSpeed* で決める（timeout コマンドに頼らない）。パスワードの入力も求めない
+if GIT_SSH_COMMAND=false GIT_TERMINAL_PROMPT=0 git -c http.lowSpeedLimit=1 -c http.lowSpeedTime=20 ls-remote git@github.com:kouichiishikawa/agents.git HEAD >/dev/null 2>&1; then
+    pass "git は SSH なしで https（gh の認証）で GitHub に届く"
+else
+    fail "git が SSH なしで GitHub に届かない（.gitconfig の insteadOf と gh auth status を確かめる）"
+fi
+# SSH の鍵（1Password）も GitHub に通る（git の接続には使わないが、鍵の登録を確かめる）
 if ssh -o BatchMode=yes -o ConnectTimeout=10 -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
     pass "ssh -T git@github.com が通る"
 else

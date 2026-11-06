@@ -70,6 +70,9 @@ collect_todo() {
     if [ ! -f "$HOME/.gitconfig.local" ]; then
         todo "~/.gitconfig.local に user.name・user.email・user.signingkey を書く（README の「Git の名前と署名」）"
     fi
+    if ! gh auth status >/dev/null 2>&1; then
+        todo "gh auth login で GitHub に入る（git の fetch・push は https と gh の認証で行う。README の「Agent 基盤」）"
+    fi
     if ! ssh -o BatchMode=yes -o ConnectTimeout=5 -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
         todo "ssh -T git@github.com が通ることを確かめる（1Password に SSH 鍵を入れ、GitHub に公開鍵を登録する）"
     fi
