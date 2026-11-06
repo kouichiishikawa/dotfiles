@@ -29,7 +29,7 @@ cd ~/dotfiles
 ./install.sh
 ```
 
-最初の clone は HTTPS で行う（公開リポジトリなので鍵が要らない）。リンクの後は `.gitconfig` の `insteadOf` で、GitHub への接続は SSH（1Password）になる。
+最初の clone は HTTPS で行う（公開リポジトリなので鍵が要らない）。リンクの後も GitHub への fetch・push は HTTPS のままで、認証は gh（5 の `gh auth login`、トークンはキーチェーン）。remote が `git@github.com:` のリポジトリも `.gitconfig` の `insteadOf` で HTTPS に読み替えるので、1Password がロック中でも git は止まらない（SSH の鍵はコミットの署名に使う）。
 
 `install.sh` が行うこと（この順）:
 
@@ -55,22 +55,22 @@ cd ~/dotfiles
 git config --file ~/.gitconfig.local user.name  "<名前>"
 git config --file ~/.gitconfig.local user.email "<メールアドレス>"
 git config --file ~/.gitconfig.local user.signingkey "<1Password の SSH 公開鍵>"   # 1Password の鍵の「公開鍵」をそのまま
-ssh -T git@github.com   # "successfully authenticated" と出れば通っている
+ssh -T git@github.com   # "successfully authenticated" と出れば鍵が GitHub に登録されている
 ```
-`commit.gpgsign=true` なので、署名ができないとコミットが止まる。
+`commit.gpgsign=true` なので、署名ができないとコミットが止まる（署名は 1Password を通るので、ロック中は Touch ID を待つ）。
 
 ### 5. Agent 基盤（`~/.agents` と `~/brain`）
-SSH が通ってから clone する（どちらも非公開）。
+gh で GitHub に入ってから clone する（どちらも非公開。git は HTTPS と gh の認証で通る）。
 ```bash
-git clone git@github.com:kouichiishikawa/agents.git ~/.agents
-git clone git@github.com:kouichiishikawa/brain.git ~/brain
+gh auth login                       # ブラウザで承認する（トークンはキーチェーンに入る）
+git clone https://github.com/kouichiishikawa/agents.git ~/.agents
+git clone https://github.com/kouichiishikawa/brain.git ~/brain
 ```
 - 自分で作った launchd（`~/Library/LaunchAgents/com.kouichiishikawa.*`）は dotfiles に入れない。plist の元がある `~/.agents`（`skills/*/launchd/`）と各リポジトリの `launchd/` から入れ直す。sprint-followup は `~/.agents/skills/sprint/references/watchdog.md` の「followup の入れ方」を見る
 - Claude Code と Agent 基盤（`~/.claude` のリンク・プラグイン・MCP・Codex・cmux のワークスペース・自作の launchd）は `~/.agents/docs/new-mac.md` を上から順に実行する（この README の 1〜5 が前提）
 - MCP サーバーのトークンは 2 の 4 のマウントで届く。値はこのリポジトリにも会話にも書き写さない（`~/.secrets.zsh` はもう使わない）
 - GitHub MCP は PAT を使わない。接続のたびに `~/.local/bin/github-mcp-headers`（install.sh がリンクする）が gh の認証（キーチェーン）からトークンを取り、読み取り専用のヘッダー（`X-MCP-Readonly`）と一緒に渡す。環境変数が要らないので、`claude` 関数を通らない起動（子タブ・launchd）でもつながる。書き込みは gh で行う
   ```bash
-  gh auth login                       # ブラウザで承認する（トークンはキーチェーンに入る）
   claude mcp add-json github --scope user \
     '{"type":"http","url":"https://api.githubcopilot.com/mcp","headersHelper":"$HOME/.local/bin/github-mcp-headers"}'
   claude mcp list                     # github が ✔ Connected
@@ -85,7 +85,7 @@ git の外にあるデータと、Brewfile に無いアプリの一覧は [docs/
 ```bash
 ./test.sh
 ```
-新しいシェルを開いてから実行する（`exec zsh -l`）。リンク・主要なツール（brew・mise・node・uv・python3・starship・gitleaks・delta・1Password の op-ssh-sign）・`brew bundle check`・シェルの起動時間（5 回の最速値が 0.3 秒以下。中央値とロードアベレージも表示する）・`ssh -T git@github.com`・git の署名の設定・`core.hooksPath`・MCP のトークンの置き場所（パイプになっているか、シェルが値を読まないか。中身は読まない）・GitHub MCP の headersHelper（ヘッダーの形と `~/.claude.json` の設定。値は出さない）を見て、1 つでも失敗すれば終了コード 1 になる。
+新しいシェルを開いてから実行する（`exec zsh -l`）。リンク・主要なツール（brew・mise・node・uv・python3・starship・gitleaks・delta・1Password の op-ssh-sign）・`brew bundle check`・シェルの起動時間（5 回の最速値が 0.3 秒以下。中央値とロードアベレージも表示する）・SSH なしで HTTPS（gh の認証）で非公開リポジトリに届くか（`GIT_SSH_COMMAND=false git ls-remote`）・`ssh -T git@github.com`・git の署名の設定・`core.hooksPath`・MCP のトークンの置き場所（パイプになっているか、シェルが値を読まないか。中身は読まない）・GitHub MCP の headersHelper（ヘッダーの形と `~/.claude.json` の設定。値は出さない）を見て、1 つでも失敗すれば終了コード 1 になる。
 
 ## ふだんの使い方
 

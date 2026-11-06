@@ -22,8 +22,10 @@
 	prune = true
 [push]
 	default = simple
-[url "git@github.com:"]
-	insteadOf = https://github.com/
+# GitHub への fetch・push は https で行い、認証は gh（下の credential、トークンはキーチェーン）。
+# SSH の 1Password エージェントを通さないので、1Password のロック中でも git が止まらない。remote の git@ はここで https に読み替える
+[url "https://github.com/"]
+	insteadOf = git@github.com:
 # 署名は 1Password の SSH 鍵で行う（鍵は ~/.gitconfig.local の user.signingkey）
 [gpg]
 	format = ssh
